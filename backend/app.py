@@ -62,14 +62,23 @@ static_root = Path(STATIC_DIR).resolve()
 if static_root.is_dir():
     logger.info(f"Serving dashboard from {static_root}")
 
+    # Build files have a content hash in their name (main-XXXX.js), so they can be cached for a long time.
+    # index.html must always be revalidated, so a new deployment is picked up on the next page load.
+    ASSET_CACHE = {"Cache-Control": "public, max-age=31536000, immutable"}
+    PAGE_CACHE = {"Cache-Control": "no-cache"}
+
     @app.get("/{full_path:path}", include_in_schema=False)
     async def dashboard(full_path: str):
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="Not found")
         file = (static_root / full_path).resolve()
         if full_path and file.is_file() and static_root in file.parents:
-            return FileResponse(file)
-        return FileResponse(static_root / "index.html")   # Angular handles its own routes
+            hashed = file.suffix in (".js", ".css") and "-" in file.stem
+            return FileResponse(file, headers=ASSET_CACHE if hashed else PAGE_CACHE)
+        if Path(full_path).suffix:
+            # A missing file (e.g. a chunk from a previous deployment) is a real 404, not the dashboard page
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(static_root / "index.html", headers=PAGE_CACHE)   # Angular handles its own routes
 
 if __name__ == "__main__":
     logger.info("Starting NeuroLens API...")
