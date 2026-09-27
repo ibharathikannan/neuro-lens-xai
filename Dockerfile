@@ -1,6 +1,6 @@
 # NeuroLens — one image: Angular dashboard + FastAPI API + model inference
 #
-# Build and push (run from the code/ folder):
+# Build and push (run from the repository folder):
 #   docker build -t mlprojectdocker.azurecr.io/neurolens:latest .
 #   docker login mlprojectdocker.azurecr.io
 #   docker push mlprojectdocker.azurecr.io/neurolens:latest

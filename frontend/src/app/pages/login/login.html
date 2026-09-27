@@ -1,6 +1,6 @@
 <div class="login-wrap">
   <section class="login-left">
-    <div class="brand"><div class="logo">N</div>NeuroLens</div>
+    <div class="brand"><img class="logo" src="logo.svg" alt="" /><div>NeuroLens<small>Explainable brain tumor MRI support</small></div></div>
     <div>
       <h2>Explainable, case-grounded<br />brain tumor MRI classification</h2>
       <p>Classify MRI scans into glioma, meningioma, pituitary tumor or no tumor, see where the model looked, compare with similar
@@ -15,6 +15,7 @@
 
   <section class="login-right">
     <form class="login-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <img class="card-logo" src="logo.svg" alt="NeuroLens" />
       <h2>Sign in</h2>
       <p>Use your NeuroLens account.</p>
 

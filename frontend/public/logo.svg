@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NeuroLens">
+  <defs>
+    <linearGradient id="nl-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b6fb6"/>
+      <stop offset="1" stop-color="#1f3864"/>
+    </linearGradient>
+    <radialGradient id="nl-heat" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ff4d2e"/>
+      <stop offset="0.5" stop-color="#ffab2e" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffd166" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#nl-bg)"/>
+  <!-- brain, seen from above: two hemispheres -->
+  <path d="M30.5 13.5C23.5 11.5 16.5 14.5 14.8 20.6C10.6 22.8 9.6 28.8 11.8 32.8C9.8 37.2 11.8 43 17 45C19 50.2 25.8 51.4 30.5 48.2Z" fill="#e8eff9"/>
+  <path d="M33.5 13.5C40.5 11.5 47.5 14.5 49.2 20.6C53.4 22.8 54.4 28.8 52.2 32.8C54.2 37.2 52.2 43 47 45C45 50.2 38.2 51.4 33.5 48.2Z" fill="#e8eff9"/>
+  <g fill="none" stroke="#9fb9e2" stroke-width="1.8" stroke-linecap="round">
+    <path d="M19 23.5C22 21.5 25.5 23 26.5 26.5"/>
+    <path d="M15.5 33C19.5 31 23 34 26.5 32"/>
+    <path d="M20.5 42C22.5 38.8 26 39.5 27.5 37"/>
+    <path d="M37 40.5C39 43 43 43.5 45.5 41"/>
+  </g>
+  <!-- the lens: where the model looked -->
+  <circle cx="41" cy="27" r="7.5" fill="url(#nl-heat)"/>
+  <circle cx="41" cy="27" r="9" fill="none" stroke="#ffffff" stroke-width="3.4"/>
+  <path d="M47.6 33.6L54 40" stroke="#ffffff" stroke-width="4.6" stroke-linecap="round"/>
+</svg>

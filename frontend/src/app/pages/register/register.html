@@ -1,6 +1,6 @@
 <div class="login-wrap">
   <section class="login-left">
-    <div class="brand"><div class="logo">N</div>NeuroLens</div>
+    <div class="brand"><img class="logo" src="logo.svg" alt="" /><div>NeuroLens<small>Explainable brain tumor MRI support</small></div></div>
     <div>
       <h2>Create your<br />NeuroLens account</h2>
       <p>Accounts give clinicians and administrators access to patient records, classification results, explanations and reports.
@@ -11,6 +11,7 @@
 
   <section class="login-right">
     <form class="login-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <img class="card-logo" src="logo.svg" alt="NeuroLens" />
       <h2>Create account</h2>
       <p>It only takes a minute.</p>
 

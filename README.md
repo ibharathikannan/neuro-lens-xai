@@ -1,16 +1,185 @@
-# NeuroLens
+<p align="center"><img src="frontend/public/logo.svg" width="96" alt="NeuroLens logo" /></p>
 
-Explainable brain tumor MRI classification: research notebooks, a FastAPI backend (accounts, login, JWT authentication, model utilities) and an Angular admin dashboard.
+<h1 align="center">NeuroLens</h1>
+
+<p align="center">Explainable, case-grounded brain tumor MRI classification — research notebooks, a FastAPI backend and an Angular dashboard.</p>
+
+> Research prototype for the NUS-ISS PRS Practice Module — **not a diagnostic device**. Use synthetic or public-dataset images only.
+
+NeuroLens classifies an MRI slice, shows **where the model looked** (Grad-CAM heatmap), finds the **most similar confirmed cases** (vector search), compares cases side by side, and produces a **report** — all from one dashboard with patient records and user accounts.
+
+---
+
+## 1. Use the live app (Azure)
+
+| | |
+|---|---|
+| **URL** | **https://neurolens-xai.azurewebsites.net** |
+| API docs | https://neurolens-xai.azurewebsites.net/docs |
+| Health check | https://neurolens-xai.azurewebsites.net/api/health |
+| Administrator email | `admin@example.com` |
+| Administrator password | not stored in this repository — see below |
+
+The administrator password is the `FIRST_ADMIN_PASSWORD` setting of the Web App. Anyone with access to the Azure subscription can read it:
+
+```bash
+az webapp config appsettings list -g mlprojectdocker -n neurolens-xai --query "[?name=='FIRST_ADMIN_PASSWORD'].value" -o tsv
+```
+
+(or Azure Portal → App Services → `neurolens-xai` → Settings → Environment variables).
+
+**Other users:** self-registration is switched off on the live site. The administrator adds team members on the **Users** page (left menu), and everyone can change their password under **My Account** (click your name in the top bar).
+
+> The first request after the site has been idle can take a minute while the container and model start.
+
+---
+
+## 2. Run it on your computer
+
+### What you need
+
+| Tool | Version | Check |
+|---|---|---|
+| Python | **3.10 – 3.12** (TensorFlow does not support 3.13+ yet) | `py -0` (Windows) · `python3 --version` |
+| Node.js | 20 or newer (tested with 24) | `node -v` |
+| Git | any | `git --version` |
+
+No Python 3.12 yet? On Windows run `py install 3.12` (Python install manager) or get the installer from [python.org](https://www.python.org/downloads/) (tick *Add python.exe to PATH*).
+
+### Step 1 — Get the code
+
+```bash
+git clone https://github.com/ibharathikannan/neuro-lens-xai.git
+cd neuro-lens-xai
+```
+
+### Step 2 — Backend environment (one time)
+
+Windows (PowerShell or Command Prompt):
+
+```bash
+cd backend
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
+pip install -r requirements-dev.txt
+copy .env.example .env
+```
+
+macOS / Linux:
+
+```bash
+cd backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements-dev.txt
+cp .env.example .env
+```
+
+The install downloads TensorFlow (about 1.8 GB on disk), so it takes a few minutes.
+
+> PowerShell says *running scripts is disabled*? Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, or use Command Prompt.
+
+### Step 3 — Settings (`backend/.env`)
+
+Open `backend/.env` and fill in at least:
+
+| Setting | What to put |
+|---|---|
+| `MONGODB_URI` | your MongoDB Atlas connection string (`mongodb+srv://…`) or `mongodb://localhost:27017` for a local MongoDB |
+| `MONGODB_DB_NAME` | e.g. `neurolens_dev` — use a **different name from the live site** to keep local test data separate |
+| `JWT_SECRET_KEY` | a long random value: `python -c "import secrets; print(secrets.token_urlsafe(64))"` |
+| `FIRST_ADMIN_EMAIL` / `FIRST_ADMIN_PASSWORD` | the administrator account created on first start (this is how you log in) |
+| `AZURE_STORAGE_CONNECTION_STRING` | optional — leave empty to keep images inside MongoDB |
+
+The model settings (`HF_REPO_ID`, `HF_MODEL_FILENAME`, `CLASS_NAMES`) already point to the published Hugging Face model; the model downloads automatically on the first start. All settings are explained in `.env.example`.
+
+### Step 4 — Start the backend
+
+With the virtual environment active, from `backend/`:
+
+```bash
+python app.py
+```
+
+- API: http://localhost:8000 · interactive docs: http://localhost:8000/docs
+- The model loads in the background (about 10–30 s the first time). It is ready when http://localhost:8000/api/health shows `"model":"ready"`.
+
+### Step 5 — Start the dashboard
+
+In a **second terminal**, from the repository folder:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Open **http://localhost:4200** and sign in with `FIRST_ADMIN_EMAIL` / `FIRST_ADMIN_PASSWORD` from your `.env`.
+(With `ALLOW_REGISTRATION=true` you can also create an account on the sign-up page — the very first account becomes the administrator.)
+
+### Step 6 — Try it
+
+1. **Patients → Add patient** (pseudonymised: age, sex, unit).
+2. **New Classification** → choose the patient, upload an MRI image → prediction, confidence and heatmap.
+3. **Mark reviewed** on the result page — reviewed scans become confirmed cases for similar-case search.
+4. **Find similar cases** → **Compare** with one of them.
+5. **Download report** (DOCX) from the result page or **Reports**.
+
+### Next time
+
+```bash
+cd backend
+.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
+python app.py
+```
+
+and in a second terminal `cd frontend` → `npm start`.
+
+### Optional: one server, like the deployed app
+
+The Docker image serves the built dashboard from the backend. To do the same locally:
+
+```bash
+cd frontend
+npm run build
+cd ../backend
+$env:STATIC_DIR="../frontend/dist/neurolens-dashboard/browser"    # Command Prompt: set STATIC_DIR=...  ·  macOS/Linux: export STATIC_DIR=...
+python app.py                                                   # dashboard + API on http://localhost:8000
+```
+
+### Run the tests
+
+```bash
+cd backend
+pytest -q          # 19 tests — in-memory database and a fake model, no internet or MongoDB needed
+```
+
+### Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `No matching distribution found for tensorflow-cpu` | Python is too new — create the environment with Python 3.12 (`py -3.12 -m venv .venv`). |
+| `No runtime installed that matches 3.12` | Install it: `py install 3.12`, or use the python.org installer. |
+| Dashboard says *Cannot reach the server* | The backend is not running on port 8000 — start it (Step 4). |
+| *Model is not available yet* when classifying | Wait until `/api/health` shows `"model":"ready"`; check the backend terminal for download errors. |
+| Login fails with the admin email | The admin is only created when that email does not exist yet. Use the password it was first created with, or a different `MONGODB_DB_NAME`. |
+| `Address already in use` | Another copy is running — close it, or run `uvicorn app:app --port 8001` and change `apiUrl` in `frontend/src/environments/environment.ts`. |
+
+---
+
+## 3. Project structure
 
 ```
-code/
+neuro-lens-xai/
 ├── research/                 Colab notebooks
-│   ├── BRAIN_TUMOR_CLASSIFICATION.ipynb   full model comparison and selection
+│   ├── BRAIN_TUMOR_CLASSIFICATION.ipynb   model comparison, selection and CAM-method comparison
 │   └── BRAIN_TUMOR_STEP_BY_STEP.ipynb     data loading and preprocessing, step by step
 ├── backend/                  FastAPI
-│   ├── app.py                entry point (CORS, routers, startup)
+│   ├── app.py                entry point (CORS, routers, startup, serves the built dashboard)
 │   ├── routers/
-│   │   ├── auth_routes.py    /api/auth: register · login · token · me · change-password · users (admin)
+│   │   ├── auth_routes.py    /api/auth: register · login · token · me · settings · change-password · users (admin)
 │   │   ├── patients.py       /api/patients
 │   │   ├── scans.py          /api/scans: classify · review · report · similar · compare
 │   │   ├── dashboard.py      /api/dashboard/summary · /api/reports · /api/system/model
@@ -22,177 +191,67 @@ code/
 │   │   ├── database.py       MongoDB connection + indexes
 │   │   ├── security.py       bcrypt password hashing, JWT create/verify, get_current_user
 │   │   ├── schemas.py        request/response models and validation
-│   │   ├── logger.py
-│   │   ├── model_architecture.py  Fibonacci-Net custom layers (identical to the notebook) + CUSTOM_OBJECTS
-│   │   ├── processing.py     uploaded image -> (1, 224, 224, 3) in [0, 1], as in training
-│   │   ├── gradcam.py        Grad-CAM heatmap (Fibonacci-Net and pretrained backbones) + overlay
 │   │   ├── model_service.py  model download (Hugging Face), prediction, embedding, heatmap
+│   │   ├── model_architecture.py  Fibonacci-Net custom layers (identical to the notebook)
+│   │   ├── processing.py     uploaded image -> (1, 224, 224, 3) in [0, 1], as in training
+│   │   ├── gradcam.py        Grad-CAM heatmap + overlay
 │   │   ├── similarity.py     similar-case search (Atlas Vector Search / exact) and case comparison
 │   │   ├── blob_storage.py   scan images in Azure Blob Storage, read-only links (SAS)
-│   │   └── report_generator.py  template-based brain MRI report (DOCX)
-│   ├── tests/                API tests (in-memory MongoDB and a fake model, no database needed)
-│   ├── requirements.txt
+│   │   ├── report_generator.py  template-based MRI report (DOCX)
+│   │   └── views.py, logger.py
+│   ├── tests/                API tests (in-memory MongoDB and a fake model)
+│   ├── requirements.txt      runtime packages · requirements-dev.txt adds the test tools
 │   └── .env.example
-└── frontend/                 Angular 22 dashboard
-    └── src/app/
-        ├── service.ts        ALL backend calls go through here
-        ├── models.ts         API data types
-        ├── mock-data.ts      demo data (used by service.ts only while useMockData = true)
-        ├── auth.guard.ts     protects dashboard pages
-        ├── layout/           sidebar + top bar
-        ├── shared/           image and chip components
-        └── pages/            login, register, dashboard, patients, patient-detail,
-                              new-scan, result, similar, compare, reports, model-system,
-                              account (change password), users (administrators)
+├── frontend/                 Angular 22 dashboard
+│   ├── public/               logo.svg, favicon
+│   └── src/app/
+│       ├── service.ts        ALL backend calls go through here
+│       ├── models.ts         API data types
+│       ├── auth.guard.ts     login / administrator guards
+│       ├── layout/           sidebar + top bar
+│       ├── shared/           image and chip components
+│       └── pages/            login, register, dashboard, patients, patient-detail, new-scan, result,
+│                             similar, compare, reports, model-system, account, users
+├── Dockerfile                one image: dashboard + API + model
+└── .github/workflows/deploy.yml   tests → build → push → deploy → verify
 ```
 
-## 1. Research
+---
 
-Open the notebooks in Google Colab with a GPU runtime. `BRAIN_TUMOR_CLASSIFICATION.ipynb` trains and compares every model, saves results to Google Drive and exports the selected model for the backend.
+## 4. How it works
 
-## 2. Backend
+### Accounts and security
 
-Use **Python 3.10–3.12** — TensorFlow (needed for classification) is not available for newer versions.
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/auth/register` | create an account (only while `ALLOW_REGISTRATION=true`; the first account becomes `admin`) |
+| POST | `/api/auth/login` | email + password → JWT |
+| GET | `/api/auth/me` | current user |
+| GET | `/api/auth/settings` | whether self-registration is open (public) |
+| POST | `/api/auth/change-password` | new password; sessions using the old one are signed out |
+| GET / POST | `/api/auth/users` | administrators list and add team members |
+| PATCH | `/api/auth/users/{id}` | administrators change a role or disable an account |
 
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate            # macOS/Linux: source venv/bin/activate
-pip install -r requirements.txt
-copy .env.example .env           # macOS/Linux: cp .env.example .env
-```
+Passwords are hashed with bcrypt (8+ characters with a letter and a number); emails are unique and stored in lower case; login errors never reveal whether an email exists; tokens expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (default 60). Every clinical route requires a valid token.
 
-Edit `.env`:
-- `MONGODB_URI` — your MongoDB Atlas connection string (or `mongodb://localhost:27017`)
-- `JWT_SECRET_KEY` — a long random value: `python -c "import secrets; print(secrets.token_urlsafe(64))"`
+### Classification and explanation
 
-```bash
-python app.py                    # http://localhost:8000  ·  API docs: http://localhost:8000/docs
-pytest -q                        # run the auth tests
-```
-
-### Auth API
-
-| Method | Route | Body | Returns |
-|---|---|---|---|
-| POST | `/api/auth/register` | `{ full_name, email, password }` | `201` token + user (the **first** account becomes `admin`) |
-| POST | `/api/auth/login` | `{ email, password }` | token + user |
-| POST | `/api/auth/token` | form: `username`, `password` | same — used by the **Authorize** button in `/docs` |
-| GET | `/api/auth/me` | header `Authorization: Bearer <token>` | current user |
-| GET | `/api/auth/settings` | — | `{ allow_registration }` (public) |
-| POST | `/api/auth/change-password` | `{ current_password, new_password }` | new token; sessions using the old password are signed out |
-| GET / POST | `/api/auth/users` | `{ full_name, email, password, role }` | administrators list and add team members |
-| PATCH | `/api/auth/users/{id}` | `{ role?, is_active? }` | administrators change a role or disable an account |
-| GET | `/api/health` | — | `{ status, database }` |
-
-Rules: passwords are hashed with bcrypt and need 8+ characters with a letter and a number; emails are stored in lower case and must be unique (`409` otherwise); login errors never reveal whether an email exists; tokens expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (default 60).
-
-To protect a new route, add the dependency:
-
-```python
-from utils.security import get_current_user, require_admin
-
-@router.get("/api/patients")
-async def list_patients(user: dict = Depends(get_current_user)):   # any logged-in user
-    ...
-
-@router.delete("/api/patients/{id}")
-async def delete_patient(id: str, user: dict = Depends(require_admin)):   # administrators only
-    ...
-```
-
-Self-registration is controlled by `ALLOW_REGISTRATION`. Once the team has accounts, set it to `false`; administrators then add people on the **Users** page, and everyone can change their password under **My Account** (click your name in the top bar).
+`POST /api/scans/classify` preprocesses the image exactly as in training, runs the model downloaded from Hugging Face, builds the Grad-CAM heatmap and stores the result with the patient. The choice of explanation method is justified in Section 8 of `BRAIN_TUMOR_CLASSIFICATION.ipynb`.
 
 ### Similar-case search
 
-Each classified scan stores an **embedding** — the feature vector the model's final layer receives, scaled to unit length — plus a small copy of its heatmap. `GET /api/scans/{id}/similar` returns the nearest **confirmed** cases by cosine similarity, and `GET /api/scans/{id}/compare/{caseId}` compares two cases (embedding similarity, heatmap overlap, focus region, class agreement, template-based reasons).
+Each classified scan stores an **embedding** — the feature vector the model's final layer receives, scaled to unit length — plus a small copy of its heatmap. `GET /api/scans/{id}/similar` returns the nearest **confirmed** cases by cosine similarity; `GET /api/scans/{id}/compare/{caseId}` compares two cases (embedding similarity, heatmap overlap, focus region, class agreement, template-based reasons).
 
-Confirmed cases come from two places:
-- the **reference library** (`reference_cases` collection) — labelled images loaded with the script below;
-- **patient scans a clinician has marked as reviewed** — their predicted class counts as confirmed.
+Confirmed cases are the **reference library** (labelled dataset images) and **patient scans marked as reviewed**. Search uses **MongoDB Atlas Vector Search** (index `embedding_index`, created automatically) and falls back to an exact search inside the API when Atlas search is unavailable. Only embeddings from the currently deployed model are compared.
 
-Search uses **MongoDB Atlas Vector Search** (the index `embedding_index` is created automatically when the model loads) and falls back to an exact search inside the API when Atlas search is unavailable or the index is still building. Only embeddings from the currently deployed model are compared.
-
-Load the reference library (run from `backend/` with the same `.env` as the app, Python 3.10–3.12 with TensorFlow). Use the **training** images, never the test set:
+Load the reference library from `backend/` (virtual environment active, same `.env` as the app) using the **training** images, never the test set:
 
 ```bash
 python scripts/load_reference_library.py --data-dir "<dataset>/Training" --per-class 250 --source "Kaggle Brain Tumor MRI v1 (training split)"
 ```
 
-Images and heatmaps are stored in Azure Blob Storage (`AZURE_STORAGE_CONNECTION_STRING`, private container `neurolens`); the dashboard gets read-only links that expire after `BLOB_URL_MINUTES`. Without a connection string, images stay inside the MongoDB records.
+### Research notebooks
 
-### Utilities for the classification routes
+Open them in Google Colab with a GPU runtime. `BRAIN_TUMOR_CLASSIFICATION.ipynb` trains and compares every model, compares CAM methods, and exports the selected model and `model_info.json` for the backend.
 
-```python
-from utils.model_architecture import CUSTOM_OBJECTS
-from utils.processing import preprocess_image
-from utils.gradcam import find_last_conv_layer, make_gradcam_heatmap, overlay_heatmap
-from utils.report_generator import generate_docx_report
-
-model = tf.keras.models.load_model(path, custom_objects=CUSTOM_OBJECTS, compile=False)
-x = preprocess_image(pil_image)                       # (1, 224, 224, 3)
-probs = model.predict(x)[0]                           # order = CLASS_NAMES in utils/config.py
-heatmap = make_gradcam_heatmap(x, model, find_last_conv_layer(model))
-overlay = overlay_heatmap(pil_image, heatmap)         # PIL image for the dashboard / report
-```
-
-## 3. Frontend
-
-```bash
-cd frontend
-npm install
-npm start                        # http://localhost:4200
-```
-
-Settings are in `src/environments/environment.ts`:
-- `apiUrl` — backend URL (default `http://localhost:8000/api`)
-- `useMockData` — `true` shows demo data on the clinical pages (patients, scans, reports) until those backend routes exist. **Login, account creation and the current user always use the real backend.** Set it to `false` once the routes are implemented; the expected routes are listed at the top of `service.ts`.
-
-`src/environments/environment.prod.ts` is used by `npm run build` — set its `apiUrl` to the deployed backend.
-
-### How the frontend talks to the backend
-
-- Pages never use `HttpClient` directly — they call methods on `ApiService` in **`service.ts`**.
-- `service.ts` stores the JWT after login/registration, adds `Authorization: Bearer <token>` to every protected request, and logs the user out (back to `/login`) on a `401`.
-- `auth.guard.ts` sends anyone without a valid, unexpired token to `/login` and returns them to the page they wanted after signing in.
-
-## Notes
-
-- Research prototype — use synthetic patient records only.
-- Never commit `.env`. In Azure Container Apps, set the same variables as secrets.
-- The backend's `CORS_ORIGINS` must include the dashboard's URL (e.g. the Azure Static Web Apps domain).
-
-## 4. Deployment (GitHub Actions → Azure)
-
-Live app: **https://neurolens-xai.azurewebsites.net** — one Docker image serves the dashboard and the API (`/api`, docs at `/docs`).
-
-Every push to `main` runs `.github/workflows/deploy.yml`:
-
-1. **Backend tests** (in-memory database, fake model).
-2. **Build and push** `mlprojectdocker.azurecr.io/neurolens:latest` and `:<commit>` — the Angular dashboard is built inside the image.
-3. **Deploy** — the registry webhook `neurolensxai` tells the Web App to pull the new `latest` image.
-4. **Verify** — waits until `/api/health` on the live site reports the commit that was just built.
-
-Repository secrets (Settings → Secrets and variables → Actions): `ACR_USERNAME`, `ACR_PASSWORD`.
-
-Azure resources: Web App `neurolens-xai` (resource group `mlprojectdocker`, B1 plan `ASP-bharathikannanapigroup-9cca`) and Storage account `neurolensxai` (private container `neurolens`). Runtime settings — `MONGODB_URI`, `JWT_SECRET_KEY`, `FIRST_ADMIN_*`, `ALLOW_REGISTRATION`, `HF_REPO_ID`, `HF_MODEL_FILENAME`, `CLASS_NAMES`, `AZURE_STORAGE_CONNECTION_STRING` — are set in the Web App's configuration, never in the image.
-
-Build locally instead:
-
-```bash
-docker build -t mlprojectdocker.azurecr.io/neurolens:latest .
-docker login mlprojectdocker.azurecr.io
-docker push mlprojectdocker.azurecr.io/neurolens:latest
-```
-
-### Switching to the brain tumor model
-
-Upload the exported model (and `model_info.json`) to Hugging Face, then update the Web App settings — no code change needed:
-
-```bash
-az webapp config appsettings set -g mlprojectdocker -n neurolens-xai --settings \
-  HF_REPO_ID=<user>/<brain-tumor-repo> HF_MODEL_FILENAME=brain_tumor_model.keras \
-  CLASS_NAMES=glioma,meningioma,notumor,pituitary MODEL_DISPLAY_NAME=Fibonacci-Net
-```
-
-Then load the reference library for the new model (see *Similar-case search*). Scans classified earlier are re-analysed with the new model the first time their similar cases are opened.
+---
