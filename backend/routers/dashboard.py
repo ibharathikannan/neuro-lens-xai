@@ -1,17 +1,19 @@
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends
+from fastapi.concurrency import run_in_threadpool
 
 from utils.config import CLASS_NAMES, CLASS_LABELS, IMG_SIZE
 from utils.database import get_patients_collection, get_scans_collection, now_utc, ping
-from utils.model_service import MODEL_INFO, MODEL_DISPLAY_NAME
+from utils import blob_storage, similarity
+from utils.model_service import MODEL_INFO, MODEL_DISPLAY_NAME, embedding_key
 from utils.security import get_current_user
-from utils.views import fmt_date, scan_view
+from utils.views import LIST_PROJECTION, fmt_date, scan_view
 
 # Create Router
 router = APIRouter(prefix="/api", tags=["Dashboard"])
 
-NO_IMAGES = {"image_jpeg": 0, "gradcam_jpeg": 0}
+NO_IMAGES = LIST_PROJECTION
 
 
 # --- Routes ---
@@ -65,6 +67,13 @@ async def list_reports(user: dict = Depends(get_current_user)):
 @router.get("/system/model")
 async def system_model(user: dict = Depends(get_current_user)):
     db_ok = ping()
+    storage_text, storage_ok = await run_in_threadpool(blob_storage.status)
+    search_text, search_ok = "Unavailable", False
+    if db_ok:
+        n_reference, n_patient = similarity.search_space(embedding_key())
+        index = similarity.index_status()
+        search_text = f"{n_reference:,} reference + {n_patient:,} reviewed scans · Atlas index: {index}"
+        search_ok = n_reference + n_patient > 0
     params = MODEL_INFO.get("params")
     return {
         "model": {
@@ -81,8 +90,8 @@ async def system_model(user: dict = Depends(get_current_user)):
             {"name": "Model", "detail": MODEL_INFO.get("source") or "Hugging Face Hub",
              "status": MODEL_INFO.get("status", "unknown").capitalize(), "healthy": MODEL_INFO.get("status") == "ready"},
             {"name": "Database", "detail": "MongoDB", "status": "Connected" if db_ok else "Unavailable", "healthy": db_ok},
-            {"name": "Similar-case search", "detail": "Reference library", "status": "Not loaded yet", "healthy": False},
-            {"name": "File storage", "detail": "Azure Blob Storage", "status": "Not configured yet", "healthy": False},
+            {"name": "Similar-case search", "detail": "MongoDB Atlas Vector Search", "status": search_text, "healthy": search_ok},
+            {"name": "File storage", "detail": "Azure Blob Storage", "status": storage_text, "healthy": storage_ok},
         ],
         "comparison": [],
         "comparison_is_placeholder": True,

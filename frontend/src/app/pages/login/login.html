@@ -40,7 +40,11 @@
         @if (loading()) { <span class="spinner"></span> } Sign in
       </button>
 
-      <p class="switch">New to NeuroLens? <a routerLink="/register">Create an account</a></p>
+      @if (allowRegistration()) {
+        <p class="switch">New to NeuroLens? <a routerLink="/register">Create an account</a></p>
+      } @else {
+        <p class="switch">Need an account? Ask your NeuroLens administrator.</p>
+      }
     </form>
   </section>
 </div>

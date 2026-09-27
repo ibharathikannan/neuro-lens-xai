@@ -1,10 +1,10 @@
 """Converts MongoDB documents into the JSON shapes the Angular dashboard expects (see frontend/src/app/models.ts)."""
-import base64
-import io
-
-from PIL import Image
-
+from utils.blob_storage import image_url
 from utils.config import CLASS_LABELS
+
+# Fields never sent in list views (large, or only used for similar-case search)
+LIST_PROJECTION = {"image_jpeg": 0, "gradcam_jpeg": 0, "embedding": 0, "heatmap": 0}
+DETAIL_PROJECTION = {"embedding": 0, "heatmap": 0}
 
 
 def fmt_date(dt, with_time=False) -> str:
@@ -13,33 +13,30 @@ def fmt_date(dt, with_time=False) -> str:
     return dt.strftime("%d %b %Y, %H:%M" if with_time else "%d %b %Y")
 
 
-def image_to_jpeg_b64(img: Image.Image, size: int = 320) -> str:
-    """Small JPEG copy for storage in the scan record (moves to Azure Blob Storage later)."""
-    img = img.convert("RGB")
-    img.thumbnail((size, size))
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=85)
-    return base64.b64encode(buf.getvalue()).decode("ascii")
-
-
-def data_url(b64: str | None) -> str | None:
-    return f"data:image/jpeg;base64,{b64}" if b64 else None
-
-
 def status_of(scan) -> str:
     if scan is None:
         return "Awaiting review"
     return scan.get("status", "Awaiting review")
 
 
-def explanation_for(prediction: str, confidence: float, has_heatmap: bool) -> str:
+def explanation_for(prediction: str, confidence: float, has_heatmap: bool, agreement: str | None = None) -> str:
     label = CLASS_LABELS.get(prediction, prediction)
     parts = [f"The model predicts {label} with {confidence * 100:.1f}% confidence."]
     if has_heatmap:
         parts.append("The heatmap shows the regions that influenced the model most (red = strongest).")
     if confidence < 0.7:
         parts.append("Confidence is below 70%, so this result has been flagged for careful review.")
-    parts.append("Similar-case evidence will appear here once the reference library is loaded.")
+    if agreement:
+        same, total = (int(v) for v in agreement.split(" / "))
+        if same * 2 > total:
+            verdict = "consistent with the prediction."
+        elif same * 2 == total:
+            verdict = "the case evidence is mixed, so review carefully."
+        else:
+            verdict = "the case evidence does not support the prediction well."
+        parts.append(f"{same} of the {total} most similar confirmed cases are {label} — {verdict}")
+    else:
+        parts.append("No confirmed cases are available yet for comparison.")
     return " ".join(parts)
 
 
@@ -52,14 +49,28 @@ def scan_view(s: dict, with_images: bool = True) -> dict:
         "confidence": s["confidence"],
         "probabilities": s["probabilities"],
         "status": s.get("status", "Awaiting review"),
-        "image_url": data_url(s.get("image_jpeg")) if with_images else None,
-        "gradcam_url": data_url(s.get("gradcam_jpeg")) if with_images else None,
+        "image_url": image_url(s, "image") if with_images else None,
+        "gradcam_url": image_url(s, "gradcam") if with_images else None,
         "report_path": f"/api/scans/{s['id']}/report",
         "model_version": s.get("model_version", ""),
         "inference_seconds": s.get("inference_seconds", 0),
         "explanation": s.get("explanation", ""),
         "scan_date": s.get("scan_date"),
         "sequence": s.get("sequence"),
+        "similar_agreement": s.get("similar_agreement"),
+    }
+
+
+def case_view(doc: dict, source: str, similarity: float, label: str) -> dict:
+    """A reference case or reviewed patient scan in the similar-case list."""
+    return {
+        "case_id": doc["id"],
+        "label": label,
+        "similarity": round(max(similarity, 0.0) * 100, 1),
+        "source": source,
+        "patient_id": doc.get("patient_id") if source == "patient" else None,
+        "image_url": image_url(doc, "image"),
+        "gradcam_url": image_url(doc, "gradcam"),
     }
 
 

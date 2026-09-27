@@ -50,3 +50,14 @@ IMG_SIZE = (224, 224)
 
 # Built Angular dashboard (served by this app when the folder exists, e.g. inside the Docker image)
 STATIC_DIR = os.getenv("STATIC_DIR", "static")
+
+# --- Azure Blob Storage (scan images, heatmaps, reference-library images) ---
+# Without a connection string, images are kept inside the MongoDB records instead (local development).
+AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "")
+AZURE_STORAGE_CONTAINER = os.getenv("AZURE_STORAGE_CONTAINER", "neurolens")
+BLOB_URL_MINUTES = int(os.getenv("BLOB_URL_MINUTES", "60"))       # how long a read-only image link stays valid
+
+# --- Similar-case search ---
+SIMILAR_K = int(os.getenv("SIMILAR_K", "5"))
+# MongoDB Atlas Vector Search is used when available; otherwise an exact search runs inside the API
+USE_ATLAS_VECTOR_SEARCH = os.getenv("USE_ATLAS_VECTOR_SEARCH", "true").lower() == "true"

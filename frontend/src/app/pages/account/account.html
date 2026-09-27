@@ -1,0 +1,52 @@
+@if (api.currentUser(); as user) {
+  <div class="grid layout">
+    <div class="card">
+      <h3>Profile</h3>
+      <div class="kv">
+        <div>Name</div><div><b>{{ user.full_name }}</b></div>
+        <div>Email</div><div>{{ user.email }}</div>
+        <div>Role</div><div>{{ user.role === 'admin' ? 'Administrator' : 'Clinician' }}</div>
+        <div>Account created</div><div>{{ user.created_at | date: 'd MMM y' }}</div>
+        <div>Last login</div><div>{{ user.last_login ? (user.last_login | date: 'd MMM y, HH:mm') : '—' }}</div>
+      </div>
+    </div>
+
+    <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h3>Change password <span class="sub">other devices will be signed out</span></h3>
+
+      @if (done()) { <div class="alert alert-info" role="status">Password changed. Sessions on other devices have been signed out.</div> }
+      @if (error()) { <div class="alert alert-error" role="alert">{{ error() }}</div> }
+
+      <div class="field">
+        <label for="current_password">Current password</label>
+        <input id="current_password" class="input" type="password" formControlName="current_password" autocomplete="current-password"
+               [class.invalid]="invalid('current_password')" />
+        @if (invalid('current_password')) { <span class="field-error">Enter your current password.</span> }
+      </div>
+
+      <div class="field">
+        <label for="new_password">New password</label>
+        <input id="new_password" class="input" type="password" formControlName="new_password" autocomplete="new-password"
+               [class.invalid]="invalid('new_password')" />
+        @if (invalid('new_password')) {
+          <span class="field-error">Use at least 8 characters, including a letter and a number.</span>
+        } @else {
+          <span class="tag">At least 8 characters, including a letter and a number.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="confirm">Confirm new password</label>
+        <input id="confirm" class="input" type="password" formControlName="confirm" autocomplete="new-password"
+               [class.invalid]="invalid('confirm')" />
+        @if (invalid('confirm')) {
+          <span class="field-error">{{ form.controls.confirm.value ? 'Passwords do not match.' : 'Confirm the new password.' }}</span>
+        }
+      </div>
+
+      <button class="btn btn-primary" type="submit" [disabled]="saving()">
+        @if (saving()) { <span class="spinner"></span> } Change password
+      </button>
+    </form>
+  </div>
+}

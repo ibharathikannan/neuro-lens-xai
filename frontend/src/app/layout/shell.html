@@ -8,6 +8,11 @@
       @for (item of nav; track item.path) {
         <a [routerLink]="item.path" routerLinkActive="active"><span class="ico">{{ item.icon }}</span>{{ item.label }}</a>
       }
+      @if (api.isAdmin()) {
+        @for (item of adminNav; track item.path) {
+          <a [routerLink]="item.path" routerLinkActive="active"><span class="ico">{{ item.icon }}</span>{{ item.label }}</a>
+        }
+      }
     </nav>
     <div class="foot">v0.1 · Research prototype</div>
   </aside>
@@ -20,13 +25,13 @@
       </div>
       <div class="spacer"></div>
       @if (api.currentUser(); as user) {
-        <div class="user">
+        <a class="user" routerLink="/account" title="My account · change password">
           <div class="avatar">{{ initials() }}</div>
           <div>
             <b>{{ user.full_name }}</b>
             <div class="muted small">{{ user.role === 'admin' ? 'Administrator' : 'Clinician' }} · {{ user.email }}</div>
           </div>
-        </div>
+        </a>
       }
       <button class="btn btn-outline" type="button" (click)="api.logout()">Log out</button>
     </header>

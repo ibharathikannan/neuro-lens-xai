@@ -15,3 +15,6 @@ numpy
 pillow
 matplotlib
 python-docx
+
+# image storage
+azure-storage-blob

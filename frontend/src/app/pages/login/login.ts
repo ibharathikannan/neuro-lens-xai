@@ -22,6 +22,11 @@ export class Login {
   protected readonly loading = signal(false);
   protected readonly error = signal('');
   protected readonly showPassword = signal(false);
+  protected readonly allowRegistration = signal(true);
+
+  constructor() {
+    this.api.getAuthSettings().subscribe({ next: (s) => this.allowRegistration.set(s.allow_registration), error: () => undefined });
+  }
 
   protected invalid(name: 'email' | 'password'): boolean {
     const c = this.form.controls[name];

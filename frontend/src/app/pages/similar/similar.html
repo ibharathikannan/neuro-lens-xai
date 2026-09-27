@@ -37,6 +37,13 @@
     </div>
 
     <div class="card">
+      @if (r.cases.length === 0) {
+        <h3>No confirmed cases yet</h3>
+        <div class="note">
+          Similar cases come from the reference library and from patient scans a clinician has marked as reviewed.
+          Load the reference library (<span class="mono">backend/scripts/load_reference_library.py</span>) or review some scans, then try again.
+        </div>
+      } @else {
       <h3>Top {{ r.cases.length }} most similar confirmed cases</h3>
       <div class="grid cases">
         @for (c of r.cases; track c.case_id; let i = $index) {
@@ -49,6 +56,7 @@
           </div>
         }
       </div>
+      }
     </div>
   </div>
 }

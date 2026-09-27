@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, guestGuard } from './auth.guard';
+import { adminGuard, authGuard, guestGuard } from './auth.guard';
 import { Shell } from './layout/shell';
 
 export const routes: Routes = [
@@ -32,6 +32,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/reports/reports').then((m) => m.Reports) },
       { path: 'system', data: { title: 'Model & System', crumb: 'Deployed model, evaluation and service status' },
         loadComponent: () => import('./pages/model-system/model-system').then((m) => m.ModelSystem) },
+      { path: 'account', data: { title: 'My Account', crumb: 'Account › Change password' },
+        loadComponent: () => import('./pages/account/account').then((m) => m.Account) },
+      { path: 'users', canActivate: [adminGuard], data: { title: 'Users', crumb: 'Administration › Team accounts' },
+        loadComponent: () => import('./pages/users/users').then((m) => m.Users) },
     ],
   },
   { path: '**', redirectTo: '' },

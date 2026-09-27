@@ -12,6 +12,7 @@ from utils.logger import logger
 
 # Global model state (loaded once, shared by all requests)
 MODEL = None
+FEATURE_MODEL = None        # same weights, also returns the embedding used for similar-case search
 MODEL_INFO = {"status": "not loaded", "source": None, "revision": None, "loaded_at": None, "error": None}
 _lock = threading.Lock()
 
@@ -60,6 +61,12 @@ def load_model():
                           loaded_at=datetime.now(timezone.utc).isoformat(), params=int(MODEL.count_params()),
                           outputs=outputs)
         logger.info(f"Model loaded ({source}, {MODEL.count_params():,} parameters, {outputs} outputs)")
+
+        # Similar-case search: make sure the vector indexes match this model's embedding size
+        feature_model = get_feature_model()
+        if feature_model is not None:
+            from utils.similarity import ensure_vector_indexes
+            ensure_vector_indexes(int(feature_model.outputs[0].shape[-1]))
         return MODEL
 
 
@@ -88,10 +95,16 @@ def classify(image: Image.Image) -> dict:
 
     start = time.perf_counter()
     x = preprocess_image(image)
-    probabilities = to_probabilities(model.predict(x, verbose=0)[0])
+    feature_model = get_feature_model()
+    if feature_model is not None:
+        features, raw = feature_model.predict(x, verbose=0)
+        embedding = l2_normalise(features[0])
+    else:
+        raw, embedding = model.predict(x, verbose=0), None
+    probabilities = to_probabilities(raw[0])
     prediction = max(probabilities, key=probabilities.get)
 
-    overlay = None
+    overlay, heatmap = None, None
     try:
         # For a single sigmoid output, explain that output (index 0) — it is the "positive" class score
         pred_index = 0 if model.output_shape[-1] == 1 else CLASS_NAMES.index(prediction)
@@ -106,8 +119,38 @@ def classify(image: Image.Image) -> dict:
         "confidence": probabilities[prediction],
         "probabilities": probabilities,
         "gradcam": overlay,
+        "heatmap": heatmap,                    # raw 0-1 map, used to compare cases
+        "embedding": embedding,                # unit-length feature vector, used for similar-case search
         "inference_seconds": round(time.perf_counter() - start, 2),
     }
+
+
+def get_feature_model():
+    """Model with two outputs: the input of the final Dense layer (the embedding) and the prediction.
+    That layer is the image representation the classifier itself relies on, so nearby embeddings mean
+    the model "sees" the two images the same way."""
+    global FEATURE_MODEL
+    if FEATURE_MODEL is None and MODEL is not None:
+        import tensorflow as tf
+        try:
+            head = next(layer for layer in reversed(MODEL.layers) if isinstance(layer, tf.keras.layers.Dense))
+            FEATURE_MODEL = tf.keras.Model(MODEL.inputs, [head.input, MODEL.output])
+            logger.info(f"Embedding layer: input of '{head.name}' ({int(head.input.shape[-1])} values)")
+        except Exception as e:
+            logger.warning(f"Embeddings unavailable, similar-case search disabled: {e}")
+            FEATURE_MODEL = False
+    return FEATURE_MODEL or None
+
+
+def l2_normalise(v) -> list:
+    v = np.asarray(v, dtype="float64").ravel()
+    norm = np.linalg.norm(v)
+    return (v / norm if norm > 0 else v).round(6).tolist()
+
+
+def embedding_key() -> str:
+    """Identifies the model that produced an embedding — only embeddings from the same model are compared."""
+    return f"{REPO_ID}/{MODEL_FILENAME}@{MODEL_INFO.get('revision') or 'local'}"
 
 
 def model_version() -> str:

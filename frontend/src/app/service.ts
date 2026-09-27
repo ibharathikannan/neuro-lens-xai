@@ -5,8 +5,8 @@ import { Observable, delay, map, of, tap, throwError, catchError } from 'rxjs';
 
 import { environment } from '../environments/environment';
 import {
-  ClassifyRequest, Comparison, DashboardSummary, LoginRequest, Patient, PatientDetail,
-  RegisterRequest, Report, Scan, SimilarResult, SystemInfo, TokenResponse, User,
+  AuthSettings, ClassifyRequest, Comparison, DashboardSummary, LoginRequest, NewUserRequest, PasswordChangeRequest,
+  Patient, PatientDetail, RegisterRequest, Report, Scan, SimilarResult, SystemInfo, TokenResponse, User, UserUpdate,
 } from './models';
 import * as mock from './mock-data';
 
@@ -21,11 +21,14 @@ const USER_KEY = 'neurolens_user';
  *   POST /api/auth/register      create account            (implemented)
  *   POST /api/auth/login         log in, returns JWT        (implemented)
  *   GET  /api/auth/me            current user               (implemented)
+ *   GET  /api/auth/settings      is self-registration open  (implemented)
+ *   POST /api/auth/change-password                          (implemented)
+ *   GET/POST /api/auth/users, PATCH /api/auth/users/{id}    administrators manage accounts (implemented)
  *   GET  /api/health             service status             (implemented)
  *   GET/POST /api/patients, GET /api/patients/{id}                     (implemented)
  *   POST /api/scans/classify, GET /api/scans/{id}, POST .../review      (implemented)
  *   GET  /api/scans/{id}/report  (DOCX), /api/reports, /api/dashboard/summary, /api/system/model  (implemented)
- *   GET  /api/scans/{id}/similar, /api/scans/{id}/compare/{caseId}      (planned — returns 501 until the reference library is loaded)
+ *   GET  /api/scans/{id}/similar, /api/scans/{id}/compare/{caseId}      (implemented — vector search over confirmed cases)
  * While environment.useMockData is true, the clinical calls return demo data from mock-data.ts instead.
  */
 @Injectable({ providedIn: 'root' })
@@ -67,6 +70,36 @@ export class ApiService {
       }),
       catchError((err) => this.fail(err)),
     );
+  }
+
+  /** Public: whether visitors may create their own account (administrators can always add users). */
+  getAuthSettings(): Observable<AuthSettings> {
+    return this.http.get<AuthSettings>(`${this.api}/auth/settings`).pipe(catchError((err) => this.fail(err, false)));
+  }
+
+  /** Changes the password; the backend signs out other sessions and returns a fresh token for this one. */
+  changePassword(body: PasswordChangeRequest): Observable<User> {
+    return this.http.post<TokenResponse>(`${this.api}/auth/change-password`, body, { headers: this.authHeaders() }).pipe(
+      tap((res) => this.storeSession(res)),
+      map((res) => res.user),
+      catchError((err) => this.fail(err)),
+    );
+  }
+
+  // ---------- User management (administrators) ----------
+
+  getUsers(): Observable<User[]> {
+    return this.get<User[]>('/auth/users');
+  }
+
+  createUser(body: NewUserRequest): Observable<User> {
+    return this.http.post<User>(`${this.api}/auth/users`, body, { headers: this.authHeaders() })
+      .pipe(catchError((err) => this.fail(err)));
+  }
+
+  updateUser(id: string, body: UserUpdate): Observable<User> {
+    return this.http.patch<User>(`${this.api}/auth/users/${encodeURIComponent(id)}`, body, { headers: this.authHeaders() })
+      .pipe(catchError((err) => this.fail(err)));
   }
 
   logout(): void {

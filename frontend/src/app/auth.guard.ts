@@ -10,6 +10,12 @@ export const authGuard: CanActivateFn = (_route, state) => {
   return inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };
 
+/** Administrator-only pages (the backend enforces the same rule). */
+export const adminGuard: CanActivateFn = () => {
+  const api = inject(ApiService);
+  return api.isAdmin() ? true : inject(Router).createUrlTree(['/dashboard']);
+};
+
 /** Keeps logged-in users away from the login and registration pages. */
 export const guestGuard: CanActivateFn = () => {
   const api = inject(ApiService);

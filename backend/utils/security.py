@@ -75,6 +75,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     if user is None or not user.get("is_active", False):
         logger.warning("Token presented for a missing or inactive user")
         raise credentials_error
+    # A password change signs out every session that logged in with the old password
+    changed = user.get("password_changed_at")
+    if changed is not None:
+        changed = changed if changed.tzinfo else changed.replace(tzinfo=timezone.utc)
+        if payload.get("iat", 0) < int(changed.timestamp()):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Password was changed — please log in again",
+                                headers={"WWW-Authenticate": "Bearer"})
     return user
 
 
@@ -98,6 +105,11 @@ def seed_first_admin() -> None:
     logger.info("First administrator account created from FIRST_ADMIN_* settings")
 
 
+def _utc(dt):
+    """MongoDB returns naive UTC datetimes; mark them as UTC so the dashboard shows local time."""
+    return dt.replace(tzinfo=timezone.utc) if dt is not None and dt.tzinfo is None else dt
+
+
 def user_to_out(user: dict) -> dict:
     """Converts a MongoDB user document into the UserOut response shape."""
     return {
@@ -106,6 +118,6 @@ def user_to_out(user: dict) -> dict:
         "email": user["email"],
         "role": user["role"],
         "is_active": user["is_active"],
-        "created_at": user["created_at"],
-        "last_login": user.get("last_login"),
+        "created_at": _utc(user["created_at"]),
+        "last_login": _utc(user.get("last_login")),
     }

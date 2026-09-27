@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from utils.database import get_patients_collection, get_scans_collection, next_id, now_utc
 from utils.logger import logger
 from utils.security import get_current_user
-from utils.views import patient_view, scan_view
+from utils.views import DETAIL_PROJECTION, LIST_PROJECTION, patient_view, scan_view
 
 # Create Router
 router = APIRouter(prefix="/api/patients", tags=["Patients"])
@@ -24,7 +24,7 @@ class PatientCreate(BaseModel):
 def _latest_scans() -> dict:
     """patient_id -> (number of scans, latest scan document)"""
     summary = {}
-    for s in get_scans_collection().find({}, {"image_jpeg": 0, "gradcam_jpeg": 0}).sort("created_at", -1):
+    for s in get_scans_collection().find({}, LIST_PROJECTION).sort("created_at", -1):
         count, latest = summary.get(s["patient_id"], (0, s))
         summary[s["patient_id"]] = (count + 1, latest)
     return summary
@@ -53,7 +53,7 @@ async def get_patient(patient_id: str, user: dict = Depends(get_current_user)):
     p = get_patients_collection().find_one({"id": patient_id})
     if p is None:
         raise HTTPException(status_code=404, detail="Patient not found")
-    history = list(get_scans_collection().find({"patient_id": patient_id}).sort("created_at", -1))
+    history = list(get_scans_collection().find({"patient_id": patient_id}, DETAIL_PROJECTION).sort("created_at", -1))
     view = patient_view(p, len(history), history[0] if history else None)
     view["history"] = [scan_view(s, with_images=True) for s in history]
     view["files"] = []   # files move to Azure Blob Storage in a later step

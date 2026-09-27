@@ -1,8 +1,14 @@
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
+
+
+def check_password_strength(value: str) -> str:
+    if not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value):
+        raise ValueError("Password must contain at least one letter and one number")
+    return value
 
 
 class UserCreate(BaseModel):
@@ -22,9 +28,29 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def strong_password(cls, value: str) -> str:
-        if not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value):
-            raise ValueError("Password must contain at least one letter and one number")
-        return value
+        return check_password_strength(value)
+
+
+class AdminUserCreate(UserCreate):
+    """Body of POST /api/auth/users (administrators add team members)"""
+    role: Literal["admin", "clinician"] = "clinician"
+
+
+class UserUpdate(BaseModel):
+    """Body of PATCH /api/auth/users/{id}"""
+    role: Optional[Literal["admin", "clinician"]] = None
+    is_active: Optional[bool] = None
+
+
+class PasswordChange(BaseModel):
+    """Body of POST /api/auth/change-password"""
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def strong_password(cls, value: str) -> str:
+        return check_password_strength(value)
 
 
 class UserLogin(BaseModel):

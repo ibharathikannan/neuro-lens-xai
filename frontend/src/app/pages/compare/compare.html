@@ -22,7 +22,7 @@
         <div>Same class</div><div><b [style.color]="d.same_class ? 'var(--ok)' : 'var(--danger)'">{{ d.same_class ? 'Yes' : 'No' }}</b></div>
         <div>Heatmap overlap (IoU)</div><div><b>{{ d.heatmap_iou }}</b></div>
         <div>Focus region</div><div><b>{{ d.focus_region }}</b></div>
-        <div>Focus distance</div><div><b>{{ d.focus_distance_px }} px</b></div>
+        <div>Focus distance</div><div><b>{{ d.focus_distance_px === null ? '—' : d.focus_distance_px + ' px' }}</b></div>
         <div>Lesion extent (est.)</div><div><b>{{ d.lesion_extent }}</b></div>
       </div>
     </div>

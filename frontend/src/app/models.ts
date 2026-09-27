@@ -52,6 +52,10 @@ export interface TokenResponse {
 
 export interface LoginRequest { email: string; password: string; }
 export interface RegisterRequest { full_name: string; email: string; password: string; }
+export interface NewUserRequest extends RegisterRequest { role: 'admin' | 'clinician'; }
+export interface UserUpdate { role?: 'admin' | 'clinician'; is_active?: boolean; }
+export interface PasswordChangeRequest { current_password: string; new_password: string; }
+export interface AuthSettings { allow_registration: boolean; }
 
 // ---------- Clinical data ----------
 
@@ -92,7 +96,7 @@ export interface Scan {
   model_version: string;
   inference_seconds: number;
   explanation: string;
-  similar_agreement?: string;                  // e.g. "5 / 5"
+  similar_agreement?: string | null;           // e.g. "5 / 5" (null until confirmed cases exist)
   lesion?: Lesion;                             // demo data only
 }
 
@@ -103,7 +107,7 @@ export interface SimilarCase {
   label: TumorClass;
   similarity: number;       // 0–100
   source: 'reference' | 'patient';
-  patient_id?: string;
+  patient_id?: string | null;
   image_url?: string;
   gradcam_url?: string;
   lesion?: Lesion;
@@ -125,7 +129,7 @@ export interface Comparison {
   same_class: boolean;
   heatmap_iou: number;
   focus_region: string;
-  focus_distance_px: number;
+  focus_distance_px: number | null;
   lesion_extent: string;
   explanation: string[];
 }

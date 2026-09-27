@@ -40,6 +40,11 @@ def get_scans_collection() -> Collection:
     return _db()["scans"]
 
 
+def get_reference_collection() -> Collection:
+    """Reference library: confirmed cases from a labelled dataset, used for similar-case search."""
+    return _db()["reference_cases"]
+
+
 def next_id(prefix: str, width: int = 4) -> str:
     """Readable sequential ids, e.g. P-0001 for patients and S-2026-0001 for scans."""
     doc = _db()["counters"].find_one_and_update(
@@ -57,6 +62,7 @@ def ensure_indexes() -> None:
     get_patients_collection().create_index([("id", ASCENDING)], unique=True, name="unique_patient_id")
     get_scans_collection().create_index([("id", ASCENDING)], unique=True, name="unique_scan_id")
     get_scans_collection().create_index([("patient_id", ASCENDING), ("created_at", DESCENDING)], name="patient_history")
+    get_reference_collection().create_index([("id", ASCENDING)], unique=True, name="unique_case_id")
     logger.info("MongoDB indexes ready")
 
 

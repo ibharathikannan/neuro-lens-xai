@@ -30,6 +30,7 @@ export class Shell implements OnInit {
     { path: '/reports', icon: '🗎', label: 'Reports' },
     { path: '/system', icon: '⚙', label: 'Model & System' },
   ];
+  protected readonly adminNav = [{ path: '/users', icon: '🔑', label: 'Users' }];
 
   ngOnInit(): void {
     this.updateTitle();

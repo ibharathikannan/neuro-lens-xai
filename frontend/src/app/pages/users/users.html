@@ -1,0 +1,88 @@
+@if (registrationOpen() !== null) {
+  <div class="alert alert-info">
+    @if (registrationOpen()) {
+      Self-registration is <b>open</b>: anyone who can reach this site can create a clinician account.
+      Switch it off with the <span class="mono">ALLOW_REGISTRATION=false</span> setting once your team has accounts.
+    } @else {
+      Self-registration is <b>switched off</b>. Add team members here; they can change their password under My Account.
+    }
+  </div>
+}
+
+@if (adding()) {
+  <form class="card" style="margin-bottom: 18px" [formGroup]="form" (ngSubmit)="add()" novalidate>
+    <h3>Add team member <span class="sub">share the starting password privately and ask them to change it</span></h3>
+    @if (addError()) { <div class="alert alert-error">{{ addError() }}</div> }
+    <div class="grid add">
+      <div class="field">
+        <label for="full_name">Full name</label>
+        <input id="full_name" class="input" formControlName="full_name" autocomplete="off" [class.invalid]="invalid('full_name')" />
+        @if (invalid('full_name')) { <span class="field-error">At least 2 characters.</span> }
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" class="input" type="email" formControlName="email" autocomplete="off" [class.invalid]="invalid('email')" />
+        @if (invalid('email')) { <span class="field-error">Enter a valid email address.</span> }
+      </div>
+      <div class="field">
+        <label for="password">Starting password</label>
+        <input id="password" class="input" type="password" formControlName="password" autocomplete="new-password" [class.invalid]="invalid('password')" />
+        @if (invalid('password')) { <span class="field-error">8+ characters, a letter and a number.</span> }
+      </div>
+      <div class="field">
+        <label for="role">Role</label>
+        <select id="role" class="input" formControlName="role">
+          <option value="clinician">Clinician</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="justify-content: flex-end">
+      <button type="button" class="btn btn-outline" (click)="adding.set(false)">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) { <span class="spinner"></span> } Add user
+      </button>
+    </div>
+  </form>
+}
+
+<div class="card">
+  <div class="row between wrap" style="margin-bottom: 14px">
+    <h3 style="margin: 0">Team accounts</h3>
+    @if (!adding()) { <button class="btn btn-primary" type="button" (click)="adding.set(true)">＋ Add user</button> }
+  </div>
+
+  @if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+
+  @if (!users()) {
+    <div class="state"><span class="spinner"></span></div>
+  } @else {
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Last login</th><th></th></tr></thead>
+      <tbody>
+        @for (u of users(); track u.id) {
+          <tr>
+            <td><b>{{ u.full_name }}</b> @if (isMe(u)) { <span class="tag">(you)</span> }</td>
+            <td>{{ u.email }}</td>
+            <td><span class="chip c-info">{{ u.role === 'admin' ? 'Administrator' : 'Clinician' }}</span></td>
+            <td><span class="chip" [class.c-ok]="u.is_active" [class.c-danger]="!u.is_active">{{ u.is_active ? 'Active' : 'Disabled' }}</span></td>
+            <td class="muted">{{ u.created_at | date: 'd MMM y' }}</td>
+            <td class="muted">{{ u.last_login ? (u.last_login | date: 'd MMM y, HH:mm') : '—' }}</td>
+            <td>
+              @if (!isMe(u)) {
+                <div class="actions">
+                  <button class="btn btn-light" type="button" (click)="update(u, { role: u.role === 'admin' ? 'clinician' : 'admin' })">
+                    Make {{ u.role === 'admin' ? 'clinician' : 'administrator' }}
+                  </button>
+                  <button class="btn btn-outline" type="button" (click)="update(u, { is_active: !u.is_active })">
+                    {{ u.is_active ? 'Disable' : 'Enable' }}
+                  </button>
+                </div>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
