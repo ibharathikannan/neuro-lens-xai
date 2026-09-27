@@ -15,10 +15,12 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-unit-tests-only-0123456789"
 os.environ["SKIP_MODEL_LOAD"] = "true"
-# Ignore the local .env: no Blob Storage, no seeded administrator, registration open
+# Ignore the local .env: no Blob Storage, no seeded administrator, registration open, fixed classes and k
 os.environ["AZURE_STORAGE_CONNECTION_STRING"] = ""
 os.environ["FIRST_ADMIN_EMAIL"] = ""
 os.environ["ALLOW_REGISTRATION"] = "true"
+os.environ["CLASS_NAMES"] = "benign,malignant"      # the tests use a two-class stand-in model
+os.environ["SIMILAR_K"] = "5"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
