@@ -1,0 +1,50 @@
+@if (adding()) {
+  <form class="card" style="margin-bottom: 18px" [formGroup]="addForm" (ngSubmit)="addPatient()">
+    <h3>New patient <span class="sub">pseudonymised — no names or identifiers</span></h3>
+    @if (addError()) { <div class="alert alert-error">{{ addError() }}</div> }
+    <div class="grid" style="grid-template-columns: 120px 140px 1fr 2fr; align-items: end">
+      <div class="field"><label for="age">Age</label><input id="age" class="input" type="number" formControlName="age" /></div>
+      <div class="field"><label for="sex">Sex</label>
+        <select id="sex" class="input" formControlName="sex"><option value="F">Female</option><option value="M">Male</option></select></div>
+      <div class="field"><label for="unit">Referring unit</label><input id="unit" class="input" formControlName="referring_unit" /></div>
+      <div class="field"><label for="notes">Clinical notes</label><input id="notes" class="input" formControlName="notes" /></div>
+    </div>
+    <div class="row" style="justify-content: flex-end">
+      <button type="button" class="btn btn-outline" (click)="adding.set(false)">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">Save patient</button>
+    </div>
+  </form>
+}
+
+<div class="card">
+  <div class="row between wrap" style="margin-bottom: 14px">
+    <input class="input" style="max-width: 300px" placeholder="🔍 Search by patient ID…" [(ngModel)]="search" (ngModelChange)="onSearch()" aria-label="Search patients" />
+    <button class="btn btn-primary" type="button" (click)="adding.set(true)">＋ Add patient</button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error">{{ error() }}</div>
+  } @else if (!patients()) {
+    <div class="state"><span class="spinner"></span></div>
+  } @else if (patients()!.length === 0) {
+    <div class="state">No patients match your search.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr><th>Patient ID</th><th>Age</th><th>Sex</th><th>Registered</th><th>Scans</th><th>Last scan</th><th>Last result</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        @for (p of patients(); track p.id) {
+          <tr class="clickable" [routerLink]="['/patients', p.id]">
+            <td><b>{{ p.id }}</b></td><td>{{ p.age }}</td><td>{{ p.sex }}</td><td class="muted">{{ p.registered }}</td>
+            <td>{{ p.scans }}</td><td class="muted">{{ p.last_scan }}</td>
+            <td>@if (p.last_result) { <app-class-chip [value]="p.last_result" /> } @else { <span class="muted">—</span> }</td>
+            <td><app-status-chip [value]="p.status" /></td>
+            <td><a [routerLink]="['/patients', p.id]">Open →</a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <div class="small muted" style="margin-top: 14px">Showing {{ patients()!.length }} patients</div>
+  }
+</div>

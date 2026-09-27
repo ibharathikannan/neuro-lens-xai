@@ -1,0 +1,62 @@
+@if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+@if (info()) { <div class="alert alert-info">{{ info() }}</div> }
+
+@if (!scan() && !error()) {
+  <div class="state"><span class="spinner"></span></div>
+} @else if (scan()) {
+  @let s = scan()!;
+  <div class="grid layout">
+    <div class="card">
+      <div class="row between"><h3 style="margin: 0">Model explanation</h3><span class="small muted">heatmap · last convolutional block</span></div>
+      <div class="row wrap" style="gap: 18px; margin-top: 14px">
+        <div>
+          <app-mri-image [src]="s.image_url" [lesion]="s.lesion" [size]="250" alt="Uploaded scan" />
+          <div class="tag" style="margin-top: 6px; text-align: center">Uploaded scan</div>
+        </div>
+        <div>
+          <app-mri-image [src]="s.gradcam_url" [lesion]="s.lesion" [heatmap]="true" [size]="250" alt="Heatmap of regions that drove the prediction" />
+          <div class="tag" style="margin-top: 6px; text-align: center">Regions that drove the prediction</div>
+        </div>
+      </div>
+      <div class="note mt"><b>Why "{{ label(s.prediction) }}"?</b> {{ s.explanation }}</div>
+    </div>
+
+    <div class="grid" style="align-content: start">
+      <div class="card">
+        <h3>Prediction</h3>
+        <div class="row" style="margin-bottom: 16px">
+          <app-class-chip [value]="s.prediction" />
+          <span class="big">{{ s.confidence | percent: '1.1-1' }}</span><span class="muted small">confidence</span>
+        </div>
+        @for (p of probabilities(); track p[0]) {
+          <div style="margin-bottom: 12px">
+            <div class="row between small"><span>{{ label(p[0]) }}</span><b>{{ p[1] | percent: '1.1-1' }}</b></div>
+            <div class="bar"><span [style.width.%]="p[1] * 100" [style.background]="color(p[0], $index)"></span></div>
+          </div>
+        }
+        <div class="kv small mt">
+          <div>Patient</div><div><a [routerLink]="['/patients', s.patient_id]">{{ s.patient_id }}</a></div>
+          <div>Model</div><div>{{ s.model_version }}</div>
+          <div>Inference time</div><div>{{ s.inference_seconds }} s</div>
+          <div>Classified</div><div>{{ s.date }}</div>
+          <div>Status</div><div><app-status-chip [value]="s.status" /></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Report</h3>
+        <div class="row wrap" style="margin-bottom: 10px">
+          <span class="chip c-ok">✓ Generated</span><span class="chip c-ok">✓ Uploaded to Azure Blob</span><span class="chip c-ok">✓ Saved to MongoDB</span>
+        </div>
+        @if (s.report_path) { <div class="mono" style="margin-bottom: 14px">{{ s.report_path }}</div> }
+        <div class="row wrap" style="gap: 10px">
+          <button class="btn btn-primary" type="button" (click)="download()">⤓ Download report</button>
+          <a class="btn btn-outline" [routerLink]="['/scans', s.id, 'similar']">⧉ Find similar cases</a>
+          @if (s.status !== 'Reviewed') {
+            <button class="btn btn-light" type="button" (click)="markReviewed()" [disabled]="busy()">✓ Mark reviewed</button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

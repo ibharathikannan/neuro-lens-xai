@@ -1,0 +1,76 @@
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+} @else if (!patient()) {
+  <div class="state"><span class="spinner"></span></div>
+} @else {
+  @let p = patient()!;
+  <div class="grid layout">
+    <div class="grid" style="align-content: start">
+      <div class="card">
+        <div class="row" style="margin-bottom: 16px">
+          <div class="avatar-lg">P</div>
+          <div><b style="font-size: 16px">{{ p.id }}</b><div class="muted small">Pseudonymised record</div></div>
+        </div>
+        <div class="kv">
+          <div>Age</div><div>{{ p.age }}</div>
+          <div>Sex</div><div>{{ p.sex === 'F' ? 'Female' : 'Male' }}</div>
+          <div>Registered</div><div>{{ p.registered }}</div>
+          <div>Referring unit</div><div>{{ p.referring_unit || '—' }}</div>
+          <div>Scans</div><div>{{ p.scans }}</div>
+          <div>Status</div><div><app-status-chip [value]="p.status" /></div>
+        </div>
+        <div class="row mt">
+          <a class="btn btn-primary" routerLink="/new-scan" [queryParams]="{ patient: p.id }">＋ New classification</a>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Clinical notes</h3>
+        <p class="muted small" style="line-height: 1.6; margin: 0">{{ p.notes || 'No notes.' }}</p>
+      </div>
+    </div>
+
+    <div class="grid" style="align-content: start">
+      <div class="card">
+        <h3>Scan history</h3>
+        @if (p.history.length === 0) {
+          <div class="state">No scans yet.</div>
+        }
+        <div class="timeline">
+          @for (s of p.history; track s.id) {
+            <div class="tl">
+              <div class="row" style="align-items: flex-start; gap: 16px">
+                <app-mri-image [src]="s.gradcam_url" [lesion]="s.lesion" [heatmap]="true" [size]="92" [alt]="'Scan ' + s.id" />
+                <div style="flex: 1">
+                  <div class="row between"><b>{{ s.id }}</b><span class="muted small">{{ s.date }}</span></div>
+                  <div class="row wrap" style="margin: 8px 0">
+                    <app-class-chip [value]="s.prediction" />
+                    <span class="small">Confidence <b>{{ s.confidence | percent: '1.1-1' }}</b></span>
+                    <app-status-chip [value]="s.status" />
+                  </div>
+                  <div class="row small">
+                    <a [routerLink]="['/scans', s.id]">View result</a>
+                    <a [routerLink]="['/scans', s.id, 'similar']">Similar cases</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Stored files <span class="sub">Azure Blob Storage</span></h3>
+        <table>
+          <thead><tr><th>File</th><th>Type</th><th>Size</th><th>Uploaded</th></tr></thead>
+          <tbody>
+            @for (f of p.files; track f.path) {
+              <tr><td class="mono">{{ f.path }}</td><td>{{ f.type }}</td><td>{{ f.size }}</td><td class="muted">{{ f.uploaded }}</td></tr>
+            } @empty {
+              <tr><td colspan="4" class="muted">No files yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

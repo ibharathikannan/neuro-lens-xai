@@ -1,0 +1,67 @@
+<div class="steps">
+  <div class="step" [class.done]="step() > 1" [class.now]="step() === 1">{{ step() > 1 ? '✓' : '' }} 1. Select patient</div>
+  <div class="step" [class.done]="step() > 2" [class.now]="step() === 2">{{ step() > 2 ? '✓' : '' }} 2. Upload MRI scan</div>
+  <div class="step" [class.now]="step() === 3">3. Classify &amp; explain</div>
+  <div class="step">4. Report &amp; save</div>
+</div>
+
+@if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+
+<form class="grid layout" [formGroup]="form" (ngSubmit)="run()">
+  <div class="card">
+    <h3>Patient</h3>
+    <div class="field">
+      <label for="patient">Patient</label>
+      <select id="patient" class="input" formControlName="patient_id">
+        @for (p of patients(); track p.id) {
+          <option [value]="p.id">{{ p.id }} · {{ p.sex }} · {{ p.age }} years</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="date">Scan date</label>
+      <input id="date" class="input" type="date" formControlName="scan_date" />
+    </div>
+    <div class="field">
+      <label for="seq">MRI sequence</label>
+      <select id="seq" class="input" formControlName="sequence">
+        <option>T1-weighted, contrast-enhanced</option>
+        <option>T1-weighted</option>
+        <option>T2-weighted</option>
+        <option>FLAIR</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" class="input" rows="3" formControlName="notes"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>MRI image</h3>
+    <div class="row" style="align-items: stretch; gap: 18px">
+      <label class="dropzone" [class.over]="dragOver()"
+             (dragover)="$event.preventDefault(); dragOver.set(true)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
+        <div style="font-size: 30px">⬆</div>
+        <b style="color: var(--text)">Drag &amp; drop an MRI slice</b>
+        <div class="small">or click to browse · JPG or PNG · a single axial slice</div>
+        <input type="file" accept="image/png,image/jpeg" hidden (change)="onFileInput($event)" />
+      </label>
+      @if (preview()) {
+        <div>
+          <img class="preview" [src]="preview()" alt="Selected MRI image" />
+          <div class="tag" style="margin-top: 6px">{{ file()?.name }} · {{ ((file()?.size ?? 0) / 1024).toFixed(0) }} KB</div>
+        </div>
+      }
+    </div>
+    <div class="note small mt">
+      The image is resized to 224×224, classified by the selected model, explained with a heatmap, compared with similar confirmed cases,
+      and stored in Azure Blob Storage with a PDF report.
+    </div>
+    <div class="row mt" style="justify-content: flex-end">
+      <button type="submit" class="btn btn-primary" [disabled]="running()">
+        @if (running()) { <span class="spinner"></span> Classifying… } @else { Run classification → }
+      </button>
+    </div>
+  </div>
+</form>

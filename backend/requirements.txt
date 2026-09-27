@@ -1,0 +1,17 @@
+# API + authentication
+fastapi
+uvicorn
+pymongo
+pydantic[email]
+bcrypt
+PyJWT
+python-dotenv
+python-multipart
+
+# model inference, Grad-CAM and reports
+tensorflow-cpu
+huggingface-hub
+numpy
+pillow
+matplotlib
+python-docx

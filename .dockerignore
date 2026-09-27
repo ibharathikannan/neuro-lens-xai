@@ -1,0 +1,27 @@
+# Secrets — never copied into the image (settings come from Azure App Service configuration)
+**/.env
+
+# Frontend build artefacts / dependencies (rebuilt inside the image)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.vscode/
+
+# Python caches, virtual environments, logs
+**/__pycache__/
+**/*.py[oc]
+**/venv/
+**/.venv/
+**/.pytest_cache/
+backend/logs/
+
+# Model weights (downloaded from Hugging Face Hub at start-up)
+backend/model_artifacts/
+
+# Not needed at runtime
+backend/tests/
+backend/requirements-dev.txt
+research/
+README.md
+.git/
+.github/

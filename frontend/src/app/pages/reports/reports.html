@@ -1,0 +1,44 @@
+@if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+@if (info()) { <div class="alert alert-info">{{ info() }}</div> }
+
+@if (!reports() && !error()) {
+  <div class="state"><span class="spinner"></span></div>
+} @else if (reports()) {
+  <div class="grid kpis">
+    <div class="card kpi"><span class="label">Reports stored</span><span class="value">{{ reports()!.length }}</span><span class="delta muted">Azure Blob Storage</span></div>
+    <div class="card kpi"><span class="label">Shown</span><span class="value">{{ filtered().length }}</span><span class="delta muted">after filters</span></div>
+    <div class="card kpi"><span class="label">Access</span><span class="value" style="font-size: 18px; padding: 6px 0">Private container</span><span class="delta muted">downloads require login</span></div>
+  </div>
+
+  <div class="card mt">
+    <div class="row between wrap" style="margin-bottom: 14px">
+      <div class="row wrap">
+        <input class="input" style="width: 260px" placeholder="🔍 Search report, patient or scan…" [ngModel]="search()" (ngModelChange)="search.set($event)" aria-label="Search reports" />
+        <select class="input" style="width: 170px" [ngModel]="classFilter()" (ngModelChange)="classFilter.set($event)" aria-label="Filter by class">
+          <option value="">Class: All</option>
+          @for (c of classes(); track c[0]) { <option [value]="c[0]">{{ c[1] }}</option> }
+        </select>
+      </div>
+      <button class="btn btn-outline" type="button" (click)="exportCsv()">⤓ Export list (CSV)</button>
+    </div>
+    <table>
+      <thead><tr><th>Report</th><th>Patient</th><th>Scan</th><th>Result</th><th>Created</th><th>Blob path</th><th>Size</th><th></th></tr></thead>
+      <tbody>
+        @for (r of filtered(); track r.id) {
+          <tr>
+            <td><b>{{ r.id }}</b></td>
+            <td><a [routerLink]="['/patients', r.patient_id]">{{ r.patient_id }}</a></td>
+            <td><a [routerLink]="['/scans', r.scan_id]">{{ r.scan_id }}</a></td>
+            <td><app-class-chip [value]="r.result" /></td>
+            <td class="muted">{{ r.created }}</td>
+            <td class="mono">{{ r.blob_path }}</td>
+            <td>{{ r.size }}</td>
+            <td><a (click)="download(r)">Download ⤓</a></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8" class="muted">No reports match the filters.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

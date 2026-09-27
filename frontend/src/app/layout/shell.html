@@ -1,0 +1,41 @@
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo">N</div>
+      <div>NeuroLens<small>Brain Tumor MRI Support</small></div>
+    </div>
+    <nav class="nav">
+      @for (item of nav; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active"><span class="ico">{{ item.icon }}</span>{{ item.label }}</a>
+      }
+    </nav>
+    <div class="foot">v0.1 · Research prototype</div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div>
+        <div class="crumb">{{ crumb() }}</div>
+        <h1>{{ title() }}</h1>
+      </div>
+      <div class="spacer"></div>
+      @if (api.currentUser(); as user) {
+        <div class="user">
+          <div class="avatar">{{ initials() }}</div>
+          <div>
+            <b>{{ user.full_name }}</b>
+            <div class="muted small">{{ user.role === 'admin' ? 'Administrator' : 'Clinician' }} · {{ user.email }}</div>
+          </div>
+        </div>
+      }
+      <button class="btn btn-outline" type="button" (click)="api.logout()">Log out</button>
+    </header>
+    <div class="disclaimer">
+      ⚠ Research prototype — not a diagnostic device. All patients shown are synthetic demo records.
+      @if (mockMode) { <b>Demo data mode:</b> clinical pages use sample data until the backend routes are available. }
+    </div>
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

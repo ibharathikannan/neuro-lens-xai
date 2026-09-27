@@ -1,0 +1,5 @@
+# Everything in requirements.txt plus the test tools
+-r requirements.txt
+pytest
+httpx
+mongomock

@@ -1,0 +1,56 @@
+<div class="login-wrap">
+  <section class="login-left">
+    <div class="brand"><div class="logo">N</div>NeuroLens</div>
+    <div>
+      <h2>Create your<br />NeuroLens account</h2>
+      <p>Accounts give clinicians and administrators access to patient records, classification results, explanations and reports.
+        The first account created becomes the administrator.</p>
+    </div>
+    <div class="fine">Research prototype — use synthetic patient data only.</div>
+  </section>
+
+  <section class="login-right">
+    <form class="login-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h2>Create account</h2>
+      <p>It only takes a minute.</p>
+
+      @if (error()) { <div class="alert alert-error" role="alert">{{ error() }}</div> }
+
+      <div class="field">
+        <label for="full_name">Full name</label>
+        <input id="full_name" class="input" formControlName="full_name" autocomplete="name" [class.invalid]="invalid('full_name')" />
+        @if (invalid('full_name')) { <span class="field-error">Enter your name (at least 2 characters).</span> }
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" class="input" type="email" formControlName="email" autocomplete="email" [class.invalid]="invalid('email')" />
+        @if (invalid('email')) { <span class="field-error">Enter a valid email address.</span> }
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" class="input" type="password" formControlName="password" autocomplete="new-password" [class.invalid]="invalid('password')" />
+        @if (invalid('password')) {
+          <span class="field-error">Use at least 8 characters, including a letter and a number.</span>
+        } @else {
+          <span class="hint">At least 8 characters, including a letter and a number.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="confirm">Confirm password</label>
+        <input id="confirm" class="input" type="password" formControlName="confirm" autocomplete="new-password" [class.invalid]="invalid('confirm')" />
+        @if (invalid('confirm')) {
+          <span class="field-error">{{ form.controls.confirm.value ? 'Passwords do not match.' : 'Confirm your password.' }}</span>
+        }
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit" [disabled]="loading()">
+        @if (loading()) { <span class="spinner"></span> } Create account
+      </button>
+
+      <p class="switch">Already have an account? <a routerLink="/login">Sign in</a></p>
+    </form>
+  </section>
+</div>

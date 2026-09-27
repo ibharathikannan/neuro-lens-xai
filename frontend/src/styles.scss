@@ -1,0 +1,89 @@
+/* NeuroLens design system — matches docs/dashboard_mockups */
+:root {
+  --navy: #1f3864; --navy-2: #2b4a80; --blue: #3b6fb6; --sky: #e8eff9;
+  --bg: #f4f6fa; --card: #ffffff; --line: #e3e7ee; --text: #1c2433; --muted: #6b7587;
+  --glioma: #d9534f; --meningioma: #e0a030; --notumor: #3a9d6b; --pituitary: #6f5bc4;
+  --ok: #2e8b57; --warn: #c9811a; --danger: #c8453f;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+a { color: var(--blue); text-decoration: none; cursor: pointer; }
+a:hover { text-decoration: underline; }
+h1, h2, h3 { margin: 0; }
+
+/* layout helpers */
+.grid { display: grid; gap: 18px; }
+.grid > * { min-width: 0; }
+.row { display: flex; align-items: center; gap: 12px; }
+.between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.mt { margin-top: 18px; }
+
+/* cards */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.card h3 { margin: 0 0 14px; font-size: 15px; font-weight: 600; }
+.card h3 .sub { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 6px; }
+.kpi { display: flex; flex-direction: column; gap: 4px; }
+.kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.kpi .value { font-size: 28px; font-weight: 700; }
+.kpi .delta { font-size: 12px; color: var(--ok); }
+.note { background: var(--sky); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #253a61; line-height: 1.5; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 10px; border-bottom: 1px solid var(--line); background: #fafbfd; }
+td { padding: 11px 10px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: #f7f9fd; }
+.mono { font-family: Consolas, monospace; font-size: 11px; color: var(--muted); }
+
+/* chips */
+.chip { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.c-glioma { background: #fbe6e5; color: var(--glioma); }
+.c-meningioma { background: #fbf0dc; color: #a56f10; }
+.c-notumor { background: #e2f3ea; color: var(--notumor); }
+.c-pituitary { background: #ece8f8; color: var(--pituitary); }
+.c-info { background: var(--sky); color: var(--navy); }
+.c-ok { background: #e2f3ea; color: var(--ok); }
+.c-warn { background: #fff1d9; color: var(--warn); }
+.c-danger { background: #fbe6e5; color: var(--danger); }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 8px; padding: 9px 14px;
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; text-decoration: none !important; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn-primary { background: var(--navy); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--navy-2); }
+.btn-outline { background: #fff; color: var(--navy); border: 1px solid #c5d2e8; }
+.btn-light { background: var(--sky); color: var(--navy); }
+.btn-block { width: 100%; padding: 12px; }
+
+/* forms */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+.input { border: 1px solid #cfd6e2; border-radius: 8px; padding: 10px 12px; background: #fff; color: var(--text); font: inherit; width: 100%; }
+.input:focus { outline: 2px solid #9fb9e2; border-color: #9fb9e2; }
+.input.invalid { border-color: var(--danger); }
+.field-error { color: var(--danger); font-size: 12px; }
+.alert { border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; }
+.alert-error { background: #fbe6e5; color: #8e2b27; }
+.alert-info { background: var(--sky); color: #253a61; }
+
+/* misc */
+.bar { height: 10px; background: #eef1f6; border-radius: 6px; overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: 6px; }
+.kv { display: grid; grid-template-columns: 130px 1fr; row-gap: 9px; font-size: 13px; }
+.kv > :nth-child(odd) { color: var(--muted); }
+.tag { font-size: 11px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; font-size: 12px; color: var(--muted); }
+.state { padding: 40px; text-align: center; color: var(--muted); }
+.spinner { width: 22px; height: 22px; border: 3px solid var(--sky); border-top-color: var(--navy); border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.c-benign { background: #e2f3ea; color: var(--notumor); }
+.c-malignant { background: #fbe6e5; color: var(--glioma); }

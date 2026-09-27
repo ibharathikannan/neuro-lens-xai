@@ -1,0 +1,19 @@
+# secrets
+.env
+backend/.env
+
+# python
+__pycache__/
+*.py[oc]
+venv/
+.venv/
+.pytest_cache/
+backend/logs/
+
+# angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# model weights (downloaded from Hugging Face Hub)
+backend/model_artifacts/

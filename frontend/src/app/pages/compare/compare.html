@@ -1,0 +1,65 @@
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+} @else if (!data()) {
+  <div class="state"><span class="spinner"></span></div>
+} @else {
+  @let d = data()!;
+  <div class="grid top3">
+    <div class="card center">
+      <h3>Query · {{ d.query.id }} <span class="sub">{{ d.query.patient_id }}</span></h3>
+      <div class="row pair">
+        <app-mri-image [src]="d.query.image_url" [lesion]="d.query.lesion" [size]="180" alt="Query scan" />
+        <app-mri-image [src]="d.query.gradcam_url" [lesion]="d.query.lesion" [heatmap]="true" [size]="180" alt="Query heatmap" />
+      </div>
+      <div class="mt"><app-class-chip [value]="d.query.prediction" /> <b>{{ d.query.confidence | percent: '1.1-1' }}</b> <span class="tag">predicted</span></div>
+    </div>
+
+    <div class="card center" style="display: flex; flex-direction: column; justify-content: center">
+      <div class="tag">Overall similarity</div>
+      <div class="score">{{ d.similarity }}%</div>
+      <div class="tag" style="margin-bottom: 16px">cosine similarity of embeddings</div>
+      <div class="kv small" style="text-align: left; grid-template-columns: 1fr auto">
+        <div>Same class</div><div><b [style.color]="d.same_class ? 'var(--ok)' : 'var(--danger)'">{{ d.same_class ? 'Yes' : 'No' }}</b></div>
+        <div>Heatmap overlap (IoU)</div><div><b>{{ d.heatmap_iou }}</b></div>
+        <div>Focus region</div><div><b>{{ d.focus_region }}</b></div>
+        <div>Focus distance</div><div><b>{{ d.focus_distance_px }} px</b></div>
+        <div>Lesion extent (est.)</div><div><b>{{ d.lesion_extent }}</b></div>
+      </div>
+    </div>
+
+    <div class="card center">
+      <h3>Reference · {{ d.reference.case_id }} <span class="sub">confirmed</span></h3>
+      <div class="row pair">
+        <app-mri-image [src]="d.reference.image_url" [lesion]="d.reference.lesion" [size]="180" alt="Reference case" />
+        <app-mri-image [src]="d.reference.gradcam_url" [lesion]="d.reference.lesion" [heatmap]="true" [size]="180" alt="Reference heatmap" />
+      </div>
+      <div class="mt"><app-class-chip [value]="d.reference.label" /> <span class="tag">confirmed label · {{ d.reference.source_dataset }}</span></div>
+    </div>
+  </div>
+
+  <div class="grid bottom mt">
+    <div class="card">
+      <h3>Why these cases are considered similar</h3>
+      <ul>
+        @for (line of d.explanation; track $index) { <li>{{ line }}</li> }
+      </ul>
+      <p class="muted small" style="margin: 12px 0 0">
+        Explanation generated from measured values (embedding similarity, heatmap overlap, labels) using a fixed template — not free-text generation.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Class probabilities side by side</h3>
+      @for (r of probRows(); track r.c) {
+        <div style="margin-bottom: 12px">
+          <div class="small" style="margin-bottom: 4px">{{ label(r.c) }}</div>
+          <div class="row small"><span style="width: 62px" class="muted">Query</span>
+            <div class="bar" style="flex: 1"><span [style.width.%]="r.query * 100" [style.background]="color(r.c, $index)"></span></div>
+            <b style="width: 48px; text-align: right">{{ r.query | percent: '1.1-1' }}</b></div>
+          <div class="row small" style="margin-top: 4px"><span style="width: 62px" class="muted">Reference</span>
+            <div class="bar" style="flex: 1"><span [style.width.%]="r.ref * 100" [style.background]="color(r.c, $index)" style="opacity: .55"></span></div>
+            <b style="width: 48px; text-align: right">{{ r.ref | percent: '1.1-1' }}</b></div>
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,54 @@
+@if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+
+@if (!id()) {
+  <div class="card">
+    <h3>Choose a scan <span class="sub">find the most similar confirmed cases for a classified scan</span></h3>
+    <table>
+      <thead><tr><th>Scan ID</th><th>Patient</th><th>Date</th><th>Prediction</th><th>Confidence</th><th></th></tr></thead>
+      <tbody>
+        @for (s of recent(); track s.id) {
+          <tr class="clickable" [routerLink]="['/scans', s.id, 'similar']">
+            <td><b>{{ s.id }}</b></td><td>{{ s.patient_id }}</td><td class="muted">{{ s.date }}</td>
+            <td><app-class-chip [value]="s.prediction" /></td><td>{{ s.confidence | percent: '1.1-1' }}</td>
+            <td><a [routerLink]="['/scans', s.id, 'similar']">Find similar →</a></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="muted">No scans yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (!result() && !error()) {
+  <div class="state"><span class="spinner"></span></div>
+} @else if (result()) {
+  @let r = result()!;
+  <div class="grid layout">
+    <div class="card">
+      <h3>Query scan</h3>
+      <app-mri-image [src]="r.query.gradcam_url" [lesion]="r.query.lesion" [heatmap]="true" [size]="258" alt="Query scan" />
+      <div class="row" style="margin-top: 12px"><app-class-chip [value]="r.query.prediction" /><b>{{ r.query.confidence | percent: '1.1-1' }}</b></div>
+      <div class="kv small mt">
+        <div>Patient</div><div>{{ r.query.patient_id }}</div>
+        <div>Search space</div><div>{{ r.search_space }}</div>
+        <div>Method</div><div>{{ r.method }}</div>
+        <div>k</div><div>{{ r.k }}</div>
+      </div>
+      <div class="note small mt"><b>Case agreement: {{ r.agreement }}</b> nearest confirmed cases share the predicted class.</div>
+    </div>
+
+    <div class="card">
+      <h3>Top {{ r.cases.length }} most similar confirmed cases</h3>
+      <div class="grid cases">
+        @for (c of r.cases; track c.case_id; let i = $index) {
+          <div class="case">
+            <app-mri-image [src]="c.gradcam_url" [lesion]="c.lesion" [heatmap]="true" [size]="124" [alt]="'Case ' + c.case_id" />
+            <b class="small" style="display: block; margin-top: 8px">#{{ i + 1 }} {{ c.case_id }}</b>
+            <div class="sim">{{ c.similarity }}%</div><div class="tag">similarity</div>
+            <div style="margin: 8px 0"><app-class-chip [value]="c.label" /> @if (c.patient_id) { <span class="tag">· {{ c.patient_id }}</span> }</div>
+            <a class="btn btn-light btn-block" style="padding: 7px" [routerLink]="['/scans', r.query.id, 'compare', c.case_id]">Compare →</a>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

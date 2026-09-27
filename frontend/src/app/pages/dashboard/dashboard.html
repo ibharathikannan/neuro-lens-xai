@@ -1,0 +1,81 @@
+@if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+} @else if (!data()) {
+  <div class="state"><span class="spinner"></span></div>
+} @else {
+  @let d = data()!;
+  <div class="grid kpis">
+    <div class="card kpi"><span class="label">Patients</span><span class="value">{{ d.patients }}</span><span class="delta">▲ {{ d.patients_this_month }} this month</span></div>
+    <div class="card kpi"><span class="label">Scans classified</span><span class="value">{{ d.scans }}</span><span class="delta">▲ {{ d.scans_this_month }} this month</span></div>
+    <div class="card kpi"><span class="label">Reports generated</span><span class="value">{{ d.reports }}</span><span class="delta">stored in Azure Blob</span></div>
+    <div class="card kpi"><span class="label">Avg. inference time</span><span class="value">{{ d.avg_inference_seconds }} s</span><span class="delta muted">incl. Grad-CAM &amp; retrieval</span></div>
+  </div>
+
+  <div class="grid charts mt">
+    <div class="card">
+      <h3>Classifications per week <span class="sub">last {{ d.weekly.length }} weeks</span></h3>
+      <svg width="100%" height="220" viewBox="0 0 560 220" role="img" aria-label="Classifications per week by class">
+        @for (i of [0, 1, 2, 3]; track i) {
+          <line x1="40" x2="550" [attr.y1]="30 + i * 45" [attr.y2]="30 + i * 45" stroke="#eef1f6" />
+        }
+        @for (b of bars(); track b.label) {
+          @for (s of b.segs; track s.c) {
+            <rect [attr.x]="b.x" [attr.y]="s.y" width="34" [attr.height]="s.h" [attr.fill]="color(s.c)" rx="2" />
+          }
+          <text [attr.x]="b.x + 17" y="208" font-size="11" fill="#6b7587" text-anchor="middle">{{ b.label }}</text>
+        }
+      </svg>
+      <div class="legend">
+        @for (c of order(); track c) { <span><i class="dot" [style.background]="color(c)"></i>{{ label(c) }}</span> }
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Predicted class distribution <span class="sub">all scans</span></h3>
+      <div class="row" style="gap: 26px">
+        <svg width="170" height="170" viewBox="0 0 42 42" role="img" aria-label="Class distribution">
+          @for (s of donut(); track s.c) {
+            <circle cx="21" cy="21" r="15.9" fill="none" [attr.stroke]="color(s.c)" stroke-width="6"
+                    [attr.stroke-dasharray]="s.dash" [attr.stroke-dashoffset]="s.offset" />
+          }
+          <text x="21" y="21" text-anchor="middle" font-size="6" font-weight="700" fill="#1c2433">{{ d.scans }}</text>
+          <text x="21" y="26" text-anchor="middle" font-size="2.6" fill="#6b7587">scans</text>
+        </svg>
+        <div style="flex: 1">
+          @for (c of order(); track c) {
+            <div class="row between" style="margin-bottom: 10px">
+              <span class="row"><i class="dot" [style.background]="color(c)"></i>{{ label(c) }}</span><b>{{ d.distribution[c] }}%</b>
+            </div>
+          }
+          <div class="note small mt">Low-confidence results (&lt; 70%) flagged for review: <b>{{ d.low_confidence }} scans</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt">
+    <div class="row between">
+      <h3 style="margin: 0">Recent classifications</h3>
+      <a class="btn btn-light" routerLink="/reports">View all</a>
+    </div>
+    <table style="margin-top: 10px">
+      <thead>
+        <tr><th>Scan ID</th><th>Patient</th><th>Date</th><th>Prediction</th><th>Confidence</th><th>Similar-case agreement</th><th></th></tr>
+      </thead>
+      <tbody>
+        @for (s of d.recent; track s.id) {
+          <tr class="clickable" [routerLink]="['/scans', s.id]">
+            <td><b>{{ s.id }}</b></td>
+            <td>{{ s.patient_id }}</td>
+            <td class="muted">{{ s.date }}</td>
+            <td><app-class-chip [value]="s.prediction" /></td>
+            <td>{{ s.confidence | percent: '1.1-1' }} @if (s.confidence < 0.7) { <span class="chip c-warn">review</span> }</td>
+            <td>{{ s.similar_agreement }}</td>
+            <td><a [routerLink]="['/scans', s.id]">Open →</a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
