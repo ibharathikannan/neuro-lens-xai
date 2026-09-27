@@ -1,14 +1,12 @@
 name: Build and deploy NeuroLens
 
 # One Docker image = Angular dashboard + FastAPI API + model inference.
-# Tests → build and push to Azure Container Registry → trigger the Azure Web App to pull the new image
-# → wait until the live site reports this commit.
+# Tests → build and push to Azure Container Registry → the registry webhook `neurolensxai` makes the
+# Azure Web App pull the new `latest` image → wait until the live site reports this commit.
 #
 # Required repository secrets (Settings → Secrets and variables → Actions):
-#   ACR_USERNAME               Azure Container Registry user name
-#   ACR_PASSWORD               Azure Container Registry password
-#   AZURE_WEBAPP_WEBHOOK_URL   the Web App's continuous-deployment URL:
-#       az webapp deployment container config -g mlprojectdocker -n neurolens-xai --enable-cd true --query CI_CD_URL -o tsv
+#   ACR_USERNAME   Azure Container Registry user name
+#   ACR_PASSWORD   Azure Container Registry password
 
 on:
   push:
@@ -83,16 +81,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # The Web App has continuous deployment enabled; calling its webhook makes it pull the new `latest` image.
-      - name: Tell the Azure Web App to deploy the new image
-        env:
-          WEBHOOK: ${{ secrets.AZURE_WEBAPP_WEBHOOK_URL }}
-        run: |
-          if [ -z "$WEBHOOK" ]; then
-            echo "::error::Secret AZURE_WEBAPP_WEBHOOK_URL is not set — see the comment at the top of this workflow."
-            exit 1
-          fi
-          curl -sf -X POST -m 60 "$WEBHOOK" -o /dev/null && echo "Deployment triggered"
 
   verify-deployment:
     name: Verify live deployment

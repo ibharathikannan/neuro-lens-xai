@@ -137,10 +137,10 @@ Every push to `main` runs `.github/workflows/deploy.yml`:
 
 1. **Backend tests** (in-memory database, fake model).
 2. **Build and push** `mlprojectdocker.azurecr.io/neurolens:latest` and `:<commit>` — the Angular dashboard is built inside the image.
-3. **Deploy** — calls the Web App's continuous-deployment URL so Azure pulls the new image.
+3. **Deploy** — the registry webhook `neurolensxai` tells the Web App to pull the new `latest` image.
 4. **Verify** — waits until `/api/health` on the live site reports the commit that was just built.
 
-Repository secrets (Settings → Secrets and variables → Actions): `ACR_USERNAME`, `ACR_PASSWORD`, `AZURE_WEBAPP_WEBHOOK_URL`.
+Repository secrets (Settings → Secrets and variables → Actions): `ACR_USERNAME`, `ACR_PASSWORD`.
 
 Azure resources: Web App `neurolens-xai` (resource group `mlprojectdocker`, B1 plan `ASP-bharathikannanapigroup-9cca`). Runtime settings — `MONGODB_URI`, `JWT_SECRET_KEY`, `FIRST_ADMIN_*`, `HF_REPO_ID`, `HF_MODEL_FILENAME`, `CLASS_NAMES` — are set in the Web App's configuration, never in the image.
 
