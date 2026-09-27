@@ -16,6 +16,9 @@ RUN npx ng build --configuration production
 # ---------- 2. Python API (serves the dashboard too) ----------
 FROM python:3.12-slim
 
+# Git commit of this build (set by the GitHub pipeline, reported by /api/health)
+ARG APP_VERSION=dev
+
 # Prevent Python from writing .pyc files and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -23,7 +26,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     TF_CPP_MIN_LOG_LEVEL=3 \
     HF_HOME=/app/.cache/huggingface \
-    STATIC_DIR=/app/static
+    STATIC_DIR=/app/static \
+    APP_VERSION=${APP_VERSION}
 
 WORKDIR /app
 

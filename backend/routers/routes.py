@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter
 
 from utils.database import ping
@@ -16,4 +18,5 @@ async def health():
         "status": "ok",
         "database": "connected" if ping() else "unavailable",
         "model": MODEL_INFO.get("status", "unknown"),
+        "version": os.getenv("APP_VERSION", "dev"),   # git commit the image was built from
     }

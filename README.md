@@ -128,3 +128,36 @@ Settings are in `src/environments/environment.ts`:
 - Research prototype — use synthetic patient records only.
 - Never commit `.env`. In Azure Container Apps, set the same variables as secrets.
 - The backend's `CORS_ORIGINS` must include the dashboard's URL (e.g. the Azure Static Web Apps domain).
+
+## 4. Deployment (GitHub Actions → Azure)
+
+Live app: **https://neurolens-xai.azurewebsites.net** — one Docker image serves the dashboard and the API (`/api`, docs at `/docs`).
+
+Every push to `main` runs `.github/workflows/deploy.yml`:
+
+1. **Backend tests** (in-memory database, fake model).
+2. **Build and push** `mlprojectdocker.azurecr.io/neurolens:latest` and `:<commit>` — the Angular dashboard is built inside the image.
+3. **Deploy** — calls the Web App's continuous-deployment URL so Azure pulls the new image.
+4. **Verify** — waits until `/api/health` on the live site reports the commit that was just built.
+
+Repository secrets (Settings → Secrets and variables → Actions): `ACR_USERNAME`, `ACR_PASSWORD`, `AZURE_WEBAPP_WEBHOOK_URL`.
+
+Azure resources: Web App `neurolens-xai` (resource group `mlprojectdocker`, B1 plan `ASP-bharathikannanapigroup-9cca`). Runtime settings — `MONGODB_URI`, `JWT_SECRET_KEY`, `FIRST_ADMIN_*`, `HF_REPO_ID`, `HF_MODEL_FILENAME`, `CLASS_NAMES` — are set in the Web App's configuration, never in the image.
+
+Build locally instead:
+
+```bash
+docker build -t mlprojectdocker.azurecr.io/neurolens:latest .
+docker login mlprojectdocker.azurecr.io
+docker push mlprojectdocker.azurecr.io/neurolens:latest
+```
+
+### Switching to the brain tumor model
+
+Upload the exported model (and `model_info.json`) to Hugging Face, then update the Web App settings — no code change needed:
+
+```bash
+az webapp config appsettings set -g mlprojectdocker -n neurolens-xai --settings \
+  HF_REPO_ID=<user>/<brain-tumor-repo> HF_MODEL_FILENAME=brain_tumor_model.keras \
+  CLASS_NAMES=glioma,meningioma,notumor,pituitary MODEL_DISPLAY_NAME=Fibonacci-Net
+```
