@@ -32,7 +32,7 @@ export class Similar implements OnInit {
   ngOnInit(): void {
     const id = this.id();
     if (id) {
-      this.api.getSimilarCases(id, 5).subscribe({
+      this.api.getSimilarCases(id).subscribe({
         next: (r) => this.result.set(r),
         error: (e: Error) => this.error.set(e.message),
       });

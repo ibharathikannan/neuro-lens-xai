@@ -174,7 +174,7 @@ pytest -q          # 19 tests — in-memory database and a fake model, no intern
 ```
 neuro-lens-xai/
 ├── research/                 Colab notebooks
-│   ├── BRAIN_TUMOR_CLASSIFICATION.ipynb   model comparison, selection and CAM-method comparison
+│   ├── BRAIN_TUMOR_CLASSIFICATION.ipynb   model comparison and selection, CAM methods, similar-case search, publishing
 │   └── BRAIN_TUMOR_STEP_BY_STEP.ipynb     data loading and preprocessing, step by step
 ├── backend/                  FastAPI
 │   ├── app.py                entry point (CORS, routers, startup, serves the built dashboard)
@@ -252,6 +252,6 @@ python scripts/load_reference_library.py --data-dir "<dataset>/Training" --per-c
 
 ### Research notebooks
 
-Open them in Google Colab with a GPU runtime. `BRAIN_TUMOR_CLASSIFICATION.ipynb` trains and compares every model, compares CAM methods, and exports the selected model and `model_info.json` for the backend.
+Open them in Google Colab with a GPU runtime. `BRAIN_TUMOR_CLASSIFICATION.ipynb` trains and compares every model (Sections 1–7), chooses the explanation method (8), evaluates similar-case search and chooses `k` (9), and publishes the selected model to Hugging Face with the exact settings for the app (10).
 
 ---

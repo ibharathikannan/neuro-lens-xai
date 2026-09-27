@@ -182,8 +182,10 @@ export class ApiService {
     return this.useMock(mock.scanById(id)) ?? this.get<Scan>(`/scans/${encodeURIComponent(id)}`);
   }
 
-  getSimilarCases(scanId: string, k = 5): Observable<SimilarResult> {
-    return this.useMock(mock.similarFor(scanId)) ?? this.get<SimilarResult>(`/scans/${encodeURIComponent(scanId)}/similar`, { k: String(k) });
+  /** k defaults to the backend's SIMILAR_K setting (chosen in the notebook, Section 9). */
+  getSimilarCases(scanId: string, k?: number): Observable<SimilarResult> {
+    return this.useMock(mock.similarFor(scanId))
+      ?? this.get<SimilarResult>(`/scans/${encodeURIComponent(scanId)}/similar`, k ? { k: String(k) } : {});
   }
 
   compareCases(scanId: string, caseId: string): Observable<Comparison> {
