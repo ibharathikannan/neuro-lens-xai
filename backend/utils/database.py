@@ -40,6 +40,11 @@ def get_scans_collection() -> Collection:
     return _db()["scans"]
 
 
+def get_studies_collection() -> Collection:
+    """Multi-slice studies: several slices of one scan classified together (slices are stored as scans)."""
+    return _db()["studies"]
+
+
 def get_reference_collection() -> Collection:
     """Reference library: confirmed cases from a labelled dataset, used for similar-case search."""
     return _db()["reference_cases"]
@@ -63,6 +68,8 @@ def ensure_indexes() -> None:
     get_scans_collection().create_index([("id", ASCENDING)], unique=True, name="unique_scan_id")
     get_scans_collection().create_index([("patient_id", ASCENDING), ("created_at", DESCENDING)], name="patient_history")
     get_reference_collection().create_index([("id", ASCENDING)], unique=True, name="unique_case_id")
+    get_studies_collection().create_index([("id", ASCENDING)], unique=True, name="unique_study_id")
+    get_scans_collection().create_index([("study_id", ASCENDING), ("slice_index", ASCENDING)], name="study_slices")
     logger.info("MongoDB indexes ready")
 
 

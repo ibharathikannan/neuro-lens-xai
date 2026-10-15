@@ -127,6 +127,11 @@ def generate_docx_report(image_buffer, prediction, probabilities, patient_id, sc
         doc.add_paragraph(f"{agree} of the {len(similar_cases)} most similar confirmed cases share the predicted class.")
 
     # 7. Disclaimer
+    return _finish(doc)
+
+
+def _finish(doc):
+    """Adds the research-prototype disclaimer and returns the document as an in-memory DOCX file."""
     doc.add_paragraph()
     disclaimer = doc.add_paragraph()
     disclaimer.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -146,3 +151,78 @@ def generate_docx_report(image_buffer, prediction, probabilities, patient_id, sc
     doc.save(buffer)
     buffer.seek(0)
     return buffer
+
+
+def generate_study_report(study, slices):
+    """
+    Report for a multi-slice study (DOCX).
+
+    study:  combined result — id, patient_id, prediction, confidence, probabilities, slice_agreement, model_version
+    slices: list of (scan_record, image_buffer_or_None, heatmap_buffer_or_None), in slice order
+    """
+    logger.info(f"Generating report for study {study['id']}: {study['prediction']}")
+    doc = Document()
+    header_para = doc.sections[0].header.paragraphs[0]
+    header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    run = header_para.add_run("NEUROLENS | BRAIN TUMOR MRI CLASSIFICATION SUPPORT")
+    run.font.size = Pt(9)
+    run.font.color.rgb = NAVY
+
+    title = doc.add_heading('Multi-slice MRI Classification Report', 0)
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    meta = doc.add_paragraph()
+    meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = meta.add_run(f"Generated {datetime.datetime.now().strftime('%d %B %Y, %H:%M')}")
+    run.font.size = Pt(10)
+    run.font.italic = True
+
+    doc.add_heading('1. Combined result', level=1)
+    summary = _table(doc, [
+        ("Patient", study["patient_id"]),
+        ("Study", study["id"]),
+        ("Slices", str(len(slices))),
+        ("Combined prediction", CLASS_LABELS.get(study["prediction"], study["prediction"])),
+        ("Average confidence", f"{study['confidence'] * 100:.1f}%"),
+        ("Slices that agree", study["slice_agreement"]),
+        ("Model", study.get("model_version", "")),
+    ])
+    summary.rows[3].cells[1].paragraphs[0].runs[0].font.bold = True
+    summary.rows[3].cells[1].paragraphs[0].runs[0].font.color.rgb = NAVY
+    if study.get("status") == "Flagged":
+        p = doc.add_paragraph()
+        r = p.add_run("Flagged for careful review: the slices disagree or the average confidence is below 70%.")
+        r.font.bold = True
+        r.font.color.rgb = RGBColor(0xC9, 0x81, 0x1A)
+    doc.add_paragraph(
+        "Each slice is classified separately by the same 2D model, and the class probabilities are averaged. "
+        "The model does not analyse the scan in 3D.")
+
+    doc.add_heading('2. Average class probabilities', level=1)
+    ordered = sorted(study["probabilities"].items(), key=lambda kv: kv[1], reverse=True)
+    _table(doc, [(CLASS_LABELS.get(c, c), f"{p * 100:.1f}%") for c, p in ordered], header=("Class", "Average probability"))
+
+    doc.add_heading('3. Per-slice results', level=1)
+    _table(doc, [(str(scan.get("slice_index", i + 1)), scan["id"], CLASS_LABELS.get(scan["prediction"], scan["prediction"]),
+                  f"{scan['confidence'] * 100:.1f}%") for i, (scan, _, _) in enumerate(slices)],
+           header=("Slice", "Scan", "Prediction", "Confidence"))
+
+    doc.add_heading('4. Slices and explanations', level=1)
+    doc.add_paragraph("Left: uploaded slice. Right: heatmap of the regions that contributed most to that slice's prediction.")
+    grid = doc.add_table(rows=0, cols=2)
+    for i, (scan, image, heatmap) in enumerate(slices):
+        caption = (f"Slice {scan.get('slice_index', i + 1)} · {scan['id']} · "
+                   f"{CLASS_LABELS.get(scan['prediction'], scan['prediction'])} ({scan['confidence'] * 100:.1f}%)")
+        cells = grid.add_row().cells
+        for cell, buf in zip(cells, (image, heatmap)):
+            if buf:
+                buf.seek(0)
+                cell.paragraphs[0].add_run().add_picture(buf, width=Inches(2.4))
+                cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        label_cells = grid.add_row().cells
+        label_cells[0].merge(label_cells[1])
+        label_cells[0].text = caption
+        label_cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        label_cells[0].paragraphs[0].runs[0].font.size = Pt(9)
+        label_cells[0].paragraphs[0].runs[0].font.color.rgb = MUTED
+
+    return _finish(doc)

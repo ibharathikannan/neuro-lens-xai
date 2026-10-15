@@ -5,6 +5,12 @@
   <div class="state"><span class="spinner"></span></div>
 } @else if (scan()) {
   @let s = scan()!;
+  @if (s.study_id) {
+    <div class="alert alert-info">
+      This is slice {{ s.slice_index }} of multi-slice study <b>{{ s.study_id }}</b>.
+      <a [routerLink]="['/studies', s.study_id]">View the combined result →</a>
+    </div>
+  }
   <div class="grid layout">
     <div class="card">
       <div class="row between"><h3 style="margin: 0">Model explanation</h3><span class="small muted">heatmap · last convolutional block</span></div>
@@ -46,7 +52,7 @@
       <div class="card">
         <h3>Report</h3>
         <div class="row wrap" style="margin-bottom: 10px">
-          <span class="chip c-ok">✓ Generated</span><span class="chip c-ok">✓ Uploaded to Azure Blob</span><span class="chip c-ok">✓ Saved to MongoDB</span>
+          <span class="chip c-ok">✓ Result saved</span><span class="chip c-info">Word report · generated on download</span>
         </div>
         @if (s.report_path) { <div class="mono" style="margin-bottom: 14px">{{ s.report_path }}</div> }
         <div class="row wrap" style="gap: 10px">

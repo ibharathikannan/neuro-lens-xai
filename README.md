@@ -17,16 +17,8 @@ NeuroLens classifies an MRI slice, shows **where the model looked** (Grad-CAM he
 | **URL** | **https://neurolens-xai.azurewebsites.net** |
 | API docs | https://neurolens-xai.azurewebsites.net/docs |
 | Health check | https://neurolens-xai.azurewebsites.net/api/health |
-| Administrator email | `admin@example.com` |
-| Administrator password | not stored in this repository — see below |
-
-The administrator password is the `FIRST_ADMIN_PASSWORD` setting of the Web App. Anyone with access to the Azure subscription can read it:
-
-```bash
-az webapp config appsettings list -g mlprojectdocker -n neurolens-xai --query "[?name=='FIRST_ADMIN_PASSWORD'].value" -o tsv
-```
-
-(or Azure Portal → App Services → `neurolens-xai` → Settings → Environment variables).
+| **Administrator email** | `admin@neurolens.com` |
+| **Administrator password** | `Neurolens@2026` |
 
 **Other users:** self-registration is switched off on the live site. The administrator adds team members on the **Users** page (left menu), and everyone can change their password under **My Account** (click your name in the top bar).
 
@@ -126,6 +118,9 @@ Open **http://localhost:4200** and sign in with `FIRST_ADMIN_EMAIL` / `FIRST_ADM
 3. **Mark reviewed** on the result page — reviewed scans become confirmed cases for similar-case search.
 4. **Find similar cases** → **Compare** with one of them.
 5. **Download report** (DOCX) from the result page or **Reports**.
+6. **Multi-slice:** on **New Classification**, choose 2–10 slices of the same scan at once → one combined result, each slice with its own heatmap, flagged if the slices disagree.
+
+Test images: `test_data/` has 10 held-out test slices per class (`glioma/`, `meningioma/`, `notumor/`, `pituitary/`) for trying the app, and `test_data/multislice/` has real slices grouped by patient (one folder per patient, 4–5 slices) for trying the multi-slice upload.
 
 ### Next time
 
@@ -153,7 +148,7 @@ python app.py                                                   # dashboard + AP
 
 ```bash
 cd backend
-pytest -q          # 19 tests — in-memory database and a fake model, no internet or MongoDB needed
+pytest -q          # 23 tests — in-memory database and a fake model, no internet or MongoDB needed
 ```
 
 ### Troubleshooting
@@ -182,6 +177,7 @@ neuro-lens-xai/
 │   │   ├── auth_routes.py    /api/auth: register · login · token · me · settings · change-password · users (admin)
 │   │   ├── patients.py       /api/patients
 │   │   ├── scans.py          /api/scans: classify · review · report · similar · compare
+│   │   ├── studies.py        /api/studies: multi-slice classify · review · report
 │   │   ├── dashboard.py      /api/dashboard/summary · /api/reports · /api/system/model
 │   │   └── routes.py         /api/health
 │   ├── scripts/
@@ -196,6 +192,7 @@ neuro-lens-xai/
 │   │   ├── processing.py     uploaded image -> (1, 224, 224, 3) in [0, 1], as in training
 │   │   ├── gradcam.py        Grad-CAM heatmap + overlay
 │   │   ├── similarity.py     similar-case search (Atlas Vector Search / exact) and case comparison
+│   │   ├── studies.py        combines the per-slice results of a multi-slice study
 │   │   ├── blob_storage.py   scan images in Azure Blob Storage, read-only links (SAS)
 │   │   ├── report_generator.py  template-based MRI report (DOCX)
 │   │   └── views.py, logger.py
@@ -211,7 +208,9 @@ neuro-lens-xai/
 │       ├── layout/           sidebar + top bar
 │       ├── shared/           image and chip components
 │       └── pages/            login, register, dashboard, patients, patient-detail, new-scan, result,
-│                             similar, compare, reports, model-system, account, users
+│                             study (multi-slice), similar, compare, reports, model-system, account, users
+├── test_data/                10 held-out test slices per class, for trying the app
+│   └── multislice/           real slices grouped by patient (Figshare), for the multi-slice demo
 ├── Dockerfile                one image: dashboard + API + model
 └── .github/workflows/deploy.yml   tests → build → push → deploy → verify
 ```
@@ -238,6 +237,24 @@ Passwords are hashed with bcrypt (8+ characters with a letter and a number); ema
 
 `POST /api/scans/classify` preprocesses the image exactly as in training, runs the model downloaded from Hugging Face, builds the Grad-CAM heatmap and stores the result with the patient. The choice of explanation method is justified in Section 8 of `BRAIN_TUMOR_CLASSIFICATION.ipynb`.
 
+### Multi-slice studies
+
+The model works on single 2D slices, because the dataset provides single slices. A real MRI scan is a stack of many slices, so the app can also classify **2–10 slices of the same scan together**:
+
+- each slice is classified separately by the same model (prediction, heatmap, embedding) and stored as a normal scan, linked to the study;
+- the study's result is the class with the highest **average probability** across the slices;
+- the study is **flagged for review** when any slice disagrees or the average confidence is below 70%;
+- reviewing a study confirms its combined class for all of its slices, which then join the similar-case search.
+
+This combines evidence after classification — the model does not analyse the scan in 3D, and no retraining is needed.
+
+| Method | Route | Purpose |
+|---|---|---|
+| POST | `/api/studies/classify` | form: `files` (2–10 images), `patient_id`, optional `scan_date`, `sequence`, `notes` |
+| GET | `/api/studies/{id}` | combined result with every slice |
+| POST | `/api/studies/{id}/review` | confirm the combined class for the study and its slices |
+| GET | `/api/studies/{id}/report` | Word report: combined result, per-slice table, slices and heatmaps |
+
 ### Similar-case search
 
 Each classified scan stores an **embedding** — the feature vector the model's final layer receives, scaled to unit length — plus a small copy of its heatmap. `GET /api/scans/{id}/similar` returns the nearest **confirmed** cases by cosine similarity; `GET /api/scans/{id}/compare/{caseId}` compares two cases (embedding similarity, heatmap overlap, focus region, class agreement, template-based reasons).
@@ -255,3 +272,25 @@ python scripts/load_reference_library.py --data-dir "<dataset>/Training" --per-c
 Open them in Google Colab with a GPU runtime. `BRAIN_TUMOR_CLASSIFICATION.ipynb` trains and compares every model (Sections 1–7), chooses the explanation method (8), evaluates similar-case search and chooses `k` (9), and publishes the selected model to Hugging Face with the exact settings for the app (10).
 
 ---
+
+## 5. Data sources
+
+**Main dataset (training, validation, testing):**
+
+- Nickparvar, M. *Brain Tumor MRI Dataset*, **version 1**. Kaggle. https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset
+  7,023 2D MRI slices (JPG) in 4 classes: glioma, meningioma, pituitary tumour, no tumour; split by the publisher into Training (5,712) and Testing (1,311). Version 1 keeps the natural class imbalance; version 2 (balanced by the publisher) is not used.
+
+The Kaggle dataset combines three public collections:
+
+| Collection | Reference |
+|---|---|
+| Figshare | Cheng, J. *brain tumor dataset*. figshare. https://doi.org/10.6084/m9.figshare.1512427 — described in Cheng, J., et al. (2015). Enhanced performance of brain tumor classification via tumor region augmentation and partition. *PLoS ONE*, 10(10), e0140381. |
+| SARTAJ | Bhuvaji, S., et al. (2020). *Brain Tumor Classification (MRI)*. Kaggle. https://www.kaggle.com/datasets/sartajbhuvaji/brain-tumor-classification-mri |
+| Br35H | Hamada, A. (2020). *Br35H :: Brain Tumor Detection 2020*. Kaggle. https://www.kaggle.com/datasets/ahmedhamada0/brain-tumor-detection |
+
+**How the data is used:** duplicates and training copies of test images are removed (MD5), 15% of the training data is held out for validation, minority classes are oversampled on the training split only, and the Testing split is used once for the final comparison (see the notebook, Sections 2–3). `test_data/` holds 40 images taken from the Testing split (10 per class, none identical to a training image).
+
+**Multi-slice demo:** the original Figshare collection above (licence CC BY 4.0) includes a patient ID for each slice. `test_data/multislice/` holds 5 patients per tumour class (meningioma, glioma, pituitary), up to 5 slices each, converted from the original MATLAB files to JPG — upload all slices of one patient folder together. The collection has no "no tumour" class, and its slices are part of the Kaggle dataset (so very likely seen in training): use them to demonstrate the feature, not to measure accuracy.
+
+**Licences:** each dataset is used under the terms on its own page, for research and education only, with attribution. No real patient data is stored in the app; all patient records are synthetic.
+

@@ -1,0 +1,78 @@
+@if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+@if (info()) { <div class="alert alert-info">{{ info() }}</div> }
+
+@if (!study() && !error()) {
+  <div class="state"><span class="spinner"></span></div>
+} @else if (study()) {
+  @let st = study()!;
+  @if (!allAgree()) {
+    <div class="alert alert-error">
+      <b>The slices disagree</b> ({{ st.slice_agreement }} predict {{ label(st.prediction) }}). This study is flagged for careful review.
+    </div>
+  }
+
+  <div class="grid layout">
+    <div class="grid" style="align-content: start">
+      <div class="card">
+        <h3>Combined result <span class="sub">{{ st.slice_count }} slices</span></h3>
+        <div class="row" style="margin-bottom: 16px">
+          <app-class-chip [value]="st.prediction" />
+          <span class="big">{{ st.confidence | percent: '1.1-1' }}</span><span class="muted small">average confidence</span>
+        </div>
+        @for (p of probabilities(); track p[0]) {
+          <div style="margin-bottom: 12px">
+            <div class="row between small"><span>{{ label(p[0]) }}</span><b>{{ p[1] | percent: '1.1-1' }}</b></div>
+            <div class="bar"><span [style.width.%]="p[1] * 100" [style.background]="color(p[0], $index)"></span></div>
+          </div>
+        }
+        <div class="kv small mt">
+          <div>Slices that agree</div><div><b>{{ st.slice_agreement }}</b></div>
+          <div>Patient</div><div><a [routerLink]="['/patients', st.patient_id]">{{ st.patient_id }}</a></div>
+          <div>Sequence</div><div>{{ st.sequence || '—' }}</div>
+          <div>Model</div><div>{{ st.model_version }}</div>
+          <div>Classified</div><div>{{ st.date }}</div>
+          <div>Status</div><div><app-status-chip [value]="st.status" /></div>
+        </div>
+        <div class="note small mt">{{ st.explanation }}</div>
+      </div>
+
+      <div class="card">
+        <h3>Report</h3>
+        <p class="small muted" style="margin-top: 0">Word report with the combined result, every slice and its heatmap, generated on download.</p>
+        <div class="row wrap" style="gap: 10px">
+          <button class="btn btn-primary" type="button" (click)="download()">⤓ Download report</button>
+          @if (st.status !== 'Reviewed') {
+            <button class="btn btn-light" type="button" (click)="markReviewed()" [disabled]="busy()">✓ Mark study reviewed</button>
+          }
+        </div>
+        @if (st.status !== 'Reviewed') {
+          <p class="small muted" style="margin-bottom: 0">Reviewing confirms the combined class for all slices, which then become confirmed cases for similar-case search.</p>
+        }
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Slices <span class="sub">each slice is classified separately by the same 2D model</span></h3>
+      <div class="grid slices">
+        @for (s of st.slices; track s.id) {
+          <div class="slice" [class.off]="s.prediction !== st.prediction">
+            <div class="row between small"><b>Slice {{ s.slice_index }}</b><span class="muted">{{ s.id }}</span></div>
+            <div class="pair">
+              <app-mri-image [src]="s.image_url" [lesion]="s.lesion" [size]="110" [alt]="'Slice ' + s.slice_index" />
+              <app-mri-image [src]="s.gradcam_url" [lesion]="s.lesion" [heatmap]="true" [size]="110" [alt]="'Heatmap of slice ' + s.slice_index" />
+            </div>
+            <div class="row wrap" style="gap: 8px">
+              <app-class-chip [value]="s.prediction" />
+              <b class="small">{{ s.confidence | percent: '1.1-1' }}</b>
+              @if (s.prediction !== st.prediction) { <span class="chip c-warn">disagrees</span> }
+            </div>
+            <div class="row small mt" style="gap: 12px; margin-top: 10px">
+              <a [routerLink]="['/scans', s.id]">Details</a>
+              <a [routerLink]="['/scans', s.id, 'similar']">Similar cases</a>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -58,6 +58,29 @@ def scan_view(s: dict, with_images: bool = True) -> dict:
         "scan_date": s.get("scan_date"),
         "sequence": s.get("sequence"),
         "similar_agreement": s.get("similar_agreement"),
+        "study_id": s.get("study_id"),
+        "slice_index": s.get("slice_index"),
+    }
+
+
+def study_view(study: dict, slices: list[dict]) -> dict:
+    """A multi-slice study with its combined result and every slice (each slice is a normal scan)."""
+    return {
+        "id": study["id"],
+        "patient_id": study["patient_id"],
+        "date": fmt_date(study.get("created_at"), with_time=True),
+        "scan_date": study.get("scan_date"),
+        "sequence": study.get("sequence"),
+        "prediction": study["prediction"],
+        "confidence": study["confidence"],
+        "probabilities": study["probabilities"],
+        "slice_count": study.get("slice_count", len(slices)),
+        "slice_agreement": study["slice_agreement"],
+        "status": study.get("status", "Awaiting review"),
+        "explanation": study.get("explanation", ""),
+        "model_version": study.get("model_version", ""),
+        "report_path": f"/api/studies/{study['id']}/report",
+        "slices": [scan_view(s) for s in slices],
     }
 
 

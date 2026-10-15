@@ -64,31 +64,29 @@ def _search(scan: dict, k: int) -> tuple[list, str]:
     return similarity.find_similar(scan["embedding"], embedding_key(), k, exclude_id=scan["id"])
 
 
-# --- Routes ---
-
-@router.post("/classify", status_code=status.HTTP_201_CREATED)
-async def classify_scan(
-    file: UploadFile = File(...),
-    patient_id: str = Form(...),
-    scan_date: str = Form(""),
-    sequence: str = Form(""),
-    notes: str = Form(""),
-    user: dict = Depends(get_current_user),
-):
-    """Classifies an uploaded MRI slice, builds the heatmap, and saves the scan to the patient's record."""
+def require_patient(patient_id: str) -> None:
     if get_patients_collection().find_one({"id": patient_id}) is None:
         raise HTTPException(status_code=404, detail="Patient not found")
 
+
+async def read_upload(file: UploadFile) -> Image.Image:
+    """Reads one uploaded MRI slice; rejects files over 10 MB and anything that is not an image."""
+    name = f" ({file.filename})" if file.filename else ""
     contents = await file.read()
     if len(contents) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Image is larger than 10 MB")
+        raise HTTPException(status_code=413, detail=f"Image is larger than 10 MB{name}")
     try:
         image = Image.open(io.BytesIO(contents))
         image.load()
     except (UnidentifiedImageError, OSError):
-        raise HTTPException(status_code=400, detail="The file is not a valid image")
+        raise HTTPException(status_code=400, detail=f"The file is not a valid image{name}")
+    return image
 
-    logger.info(f"Classify request for patient {patient_id} ({file.filename})")
+
+async def classify_and_store(image: Image.Image, patient_id: str, user: dict, scan_date: str = "", sequence: str = "",
+                             notes: str = "", study_id: str | None = None, slice_index: int | None = None) -> dict:
+    """Classifies one slice, builds its heatmap and embedding, stores the images and saves the scan record.
+    Used for single uploads and for every slice of a multi-slice study."""
     try:
         result = await run_in_threadpool(classify, image)
     except RuntimeError as e:
@@ -131,8 +129,29 @@ async def classify_scan(
         "heatmap": similarity.heatmap_grid(result.get("heatmap")),
         **images,
     }
+    if study_id:
+        doc.update(study_id=study_id, slice_index=slice_index)
     get_scans_collection().insert_one(doc)
-    logger.info(f"Scan {doc['id']}: {doc['prediction']} ({doc['confidence']:.3f})")
+    logger.info(f"Scan {doc['id']}: {doc['prediction']} ({doc['confidence']:.3f})" + (f" · study {study_id}" if study_id else ""))
+    return doc
+
+
+# --- Routes ---
+
+@router.post("/classify", status_code=status.HTTP_201_CREATED)
+async def classify_scan(
+    file: UploadFile = File(...),
+    patient_id: str = Form(...),
+    scan_date: str = Form(""),
+    sequence: str = Form(""),
+    notes: str = Form(""),
+    user: dict = Depends(get_current_user),
+):
+    """Classifies an uploaded MRI slice, builds the heatmap, and saves the scan to the patient's record."""
+    require_patient(patient_id)
+    image = await read_upload(file)
+    logger.info(f"Classify request for patient {patient_id} ({file.filename})")
+    doc = await classify_and_store(image, patient_id, user, scan_date, sequence, notes)
     return scan_view(doc)
 
 

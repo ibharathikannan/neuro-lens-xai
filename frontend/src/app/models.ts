@@ -97,6 +97,8 @@ export interface Scan {
   inference_seconds: number;
   explanation: string;
   similar_agreement?: string | null;           // e.g. "5 / 5" (null until confirmed cases exist)
+  study_id?: string | null;                    // set when the scan is one slice of a multi-slice study
+  slice_index?: number | null;
   lesion?: Lesion;                             // demo data only
 }
 
@@ -177,4 +179,28 @@ export interface ClassifyRequest {
   sequence: string;
   notes: string;
   file: File;
+}
+
+/** Several 2D slices of the same MRI scan, classified together (2–10 files). */
+export interface StudyRequest extends Omit<ClassifyRequest, 'file'> {
+  files: File[];
+}
+
+/** Multi-slice result: each slice is classified separately; probabilities are averaged across slices. */
+export interface Study {
+  id: string;
+  patient_id: string;
+  date: string;
+  scan_date?: string;
+  sequence?: string;
+  prediction: TumorClass;
+  confidence: number;                          // average probability of the combined class
+  probabilities: Record<TumorClass, number>;   // averaged over the slices
+  slice_count: number;
+  slice_agreement: string;                     // e.g. "3 / 4" slices predict the combined class
+  status: ReviewStatus;
+  explanation: string;
+  model_version: string;
+  report_path: string;
+  slices: Scan[];
 }

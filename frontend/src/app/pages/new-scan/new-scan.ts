@@ -6,6 +6,7 @@ import { ApiService } from '../../service';
 import { Patient } from '../../models';
 
 const MAX_MB = 10;
+const MAX_SLICES = 10;
 
 @Component({
   selector: 'app-new-scan',
@@ -21,6 +22,11 @@ const MAX_MB = 10;
                 display: flex; flex-direction: column; justify-content: center; gap: 6px; cursor: pointer; }
     .dropzone.over { border-color: var(--navy); background: var(--sky); }
     .preview { width: 210px; height: 210px; object-fit: cover; border-radius: 10px; background: #000; display: block; }
+    .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin-top: 14px; }
+    .thumb { position: relative; }
+    .thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #000; display: block; }
+    .thumb button { position: absolute; top: 4px; right: 4px; border: 0; border-radius: 50%; width: 22px; height: 22px;
+                    background: rgba(0, 0, 0, .65); color: #fff; cursor: pointer; line-height: 22px; padding: 0; }
     @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
   `,
 })
@@ -31,8 +37,10 @@ export class NewScan implements OnInit {
   readonly patient = input<string>();
 
   protected readonly patients = signal<Patient[]>([]);
-  protected readonly file = signal<File | null>(null);
-  protected readonly preview = signal<string | null>(null);
+  /** One file = single-slice classification; 2–10 files = a multi-slice study of the same scan. */
+  protected readonly files = signal<File[]>([]);
+  protected readonly previews = signal<string[]>([]);
+  protected readonly maxSlices = MAX_SLICES;
   protected readonly dragOver = signal(false);
   protected readonly running = signal(false);
   protected readonly error = signal('');
@@ -57,52 +65,74 @@ export class NewScan implements OnInit {
 
   protected step(): number {
     if (this.running()) return 3;
-    return this.file() ? 3 : this.form.controls.patient_id.value ? 2 : 1;
+    return this.files().length ? 3 : this.form.controls.patient_id.value ? 2 : 1;
   }
 
   protected onFileInput(event: Event): void {
-    const f = (event.target as HTMLInputElement).files?.[0];
-    if (f) this.setFile(f);
+    const input = event.target as HTMLInputElement;
+    this.addFiles(Array.from(input.files ?? []));
+    input.value = '';                                   // allow choosing the same file again after removing it
   }
 
   protected onDrop(event: DragEvent): void {
     event.preventDefault();
     this.dragOver.set(false);
-    const f = event.dataTransfer?.files?.[0];
-    if (f) this.setFile(f);
+    this.addFiles(Array.from(event.dataTransfer?.files ?? []));
   }
 
-  private setFile(f: File): void {
+  private addFiles(list: File[]): void {
     this.error.set('');
-    if (!['image/jpeg', 'image/png'].includes(f.type)) {
-      this.error.set('Please choose a JPG or PNG image.');
-      return;
+    for (const f of list) {
+      if (!['image/jpeg', 'image/png'].includes(f.type)) {
+        this.error.set(`${f.name}: please choose JPG or PNG images.`);
+        continue;
+      }
+      if (f.size > MAX_MB * 1024 * 1024) {
+        this.error.set(`${f.name} is larger than ${MAX_MB} MB.`);
+        continue;
+      }
+      if (this.files().length >= MAX_SLICES) {
+        this.error.set(`A study can have at most ${MAX_SLICES} slices.`);
+        break;
+      }
+      this.files.update((fs) => [...fs, f]);
+      this.previews.update((ps) => [...ps, '']);
+      const index = this.files().length - 1;
+      const reader = new FileReader();
+      reader.onload = () => this.previews.update((ps) => ps.map((p, i) => (i === index ? (reader.result as string) : p)));
+      reader.readAsDataURL(f);
     }
-    if (f.size > MAX_MB * 1024 * 1024) {
-      this.error.set(`The image is larger than ${MAX_MB} MB.`);
-      return;
-    }
-    this.file.set(f);
-    const reader = new FileReader();
-    reader.onload = () => this.preview.set(reader.result as string);
-    reader.readAsDataURL(f);
+  }
+
+  protected removeFile(index: number): void {
+    this.files.update((fs) => fs.filter((_, i) => i !== index));
+    this.previews.update((ps) => ps.filter((_, i) => i !== index));
   }
 
   protected run(): void {
-    const f = this.file();
-    if (this.form.invalid || !f) {
+    const files = this.files();
+    if (this.form.invalid || files.length === 0) {
       this.form.markAllAsTouched();
-      if (!f) this.error.set('Please upload an MRI image first.');
+      if (files.length === 0) this.error.set('Please upload an MRI image first.');
       return;
     }
     this.running.set(true);
     this.error.set('');
-    this.api.classifyScan({ ...this.form.getRawValue(), file: f }).subscribe({
-      next: (scan) => this.router.navigate(['/scans', scan.id]),
-      error: (e: Error) => {
-        this.error.set(e.message);
-        this.running.set(false);
-      },
-    });
+    const fail = (e: Error) => {
+      this.error.set(e.message);
+      this.running.set(false);
+    };
+    const details = this.form.getRawValue();
+    if (files.length === 1) {
+      this.api.classifyScan({ ...details, file: files[0] }).subscribe({
+        next: (scan) => this.router.navigate(['/scans', scan.id]),
+        error: fail,
+      });
+    } else {
+      this.api.classifyStudy({ ...details, files }).subscribe({
+        next: (study) => this.router.navigate(['/studies', study.id]),
+        error: fail,
+      });
+    }
   }
 }

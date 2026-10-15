@@ -38,29 +38,43 @@
   </div>
 
   <div class="card">
-    <h3>MRI image</h3>
-    <div class="row" style="align-items: stretch; gap: 18px">
-      <label class="dropzone" [class.over]="dragOver()"
-             (dragover)="$event.preventDefault(); dragOver.set(true)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
-        <div style="font-size: 30px">⬆</div>
-        <b style="color: var(--text)">Drag &amp; drop an MRI slice</b>
-        <div class="small">or click to browse · JPG or PNG · a single axial slice</div>
-        <input type="file" accept="image/png,image/jpeg" hidden (change)="onFileInput($event)" />
-      </label>
-      @if (preview()) {
-        <div>
-          <img class="preview" [src]="preview()" alt="Selected MRI image" />
-          <div class="tag" style="margin-top: 6px">{{ file()?.name }} · {{ ((file()?.size ?? 0) / 1024).toFixed(0) }} KB</div>
-        </div>
-      }
-    </div>
+    <h3>MRI image
+      @if (files().length > 1) { <span class="sub">multi-slice study · {{ files().length }} slices</span> }
+    </h3>
+    <label class="dropzone" [class.over]="dragOver()"
+           (dragover)="$event.preventDefault(); dragOver.set(true)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
+      <div style="font-size: 30px">⬆</div>
+      <b style="color: var(--text)">Drag &amp; drop one MRI slice, or 2–{{ maxSlices }} slices from the same scan</b>
+      <div class="small">or click to browse · JPG or PNG</div>
+      <input type="file" accept="image/png,image/jpeg" multiple hidden (change)="onFileInput($event)" />
+    </label>
+    @if (files().length) {
+      <div class="thumbs">
+        @for (f of files(); track $index) {
+          <div class="thumb">
+            @if (previews()[$index]) { <img [src]="previews()[$index]" [alt]="f.name" /> }
+            <button type="button" (click)="removeFile($index)" [attr.aria-label]="'Remove ' + f.name" title="Remove">×</button>
+            <div class="tag" style="margin-top: 4px">{{ files().length > 1 ? 'Slice ' + ($index + 1) : f.name }}</div>
+          </div>
+        }
+      </div>
+    }
     <div class="note small mt">
-      The image is resized to 224×224, classified by the selected model, explained with a heatmap, compared with similar confirmed cases,
-      and stored in Azure Blob Storage with a PDF report.
+      @if (files().length > 1) {
+        Each slice is classified separately by the same 2D model and explained with its own heatmap; the results are then combined
+        (average confidence), and the study is flagged for review if the slices disagree.
+      } @else {
+        The image is resized to 224×224, classified by the selected model, explained with a heatmap and compared with similar
+        confirmed cases. A Word report can be downloaded from the result page.
+      }
     </div>
     <div class="row mt" style="justify-content: flex-end">
       <button type="submit" class="btn btn-primary" [disabled]="running()">
-        @if (running()) { <span class="spinner"></span> Classifying… } @else { Run classification → }
+        @if (running()) {
+          <span class="spinner"></span> Classifying{{ files().length > 1 ? ' ' + files().length + ' slices' : '' }}…
+        } @else {
+          {{ files().length > 1 ? 'Classify ' + files().length + ' slices →' : 'Run classification →' }}
+        }
       </button>
     </div>
   </div>

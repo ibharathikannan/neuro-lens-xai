@@ -6,7 +6,7 @@ import { Observable, delay, map, of, tap, throwError, catchError } from 'rxjs';
 import { environment } from '../environments/environment';
 import {
   AuthSettings, ClassifyRequest, Comparison, DashboardSummary, LoginRequest, NewUserRequest, PasswordChangeRequest,
-  Patient, PatientDetail, RegisterRequest, Report, Scan, SimilarResult, SystemInfo, TokenResponse, User, UserUpdate,
+  Patient, PatientDetail, RegisterRequest, Report, Scan, SimilarResult, Study, StudyRequest, SystemInfo, TokenResponse, User, UserUpdate,
 } from './models';
 import * as mock from './mock-data';
 
@@ -29,6 +29,7 @@ const USER_KEY = 'neurolens_user';
  *   POST /api/scans/classify, GET /api/scans/{id}, POST .../review      (implemented)
  *   GET  /api/scans/{id}/report  (DOCX), /api/reports, /api/dashboard/summary, /api/system/model  (implemented)
  *   GET  /api/scans/{id}/similar, /api/scans/{id}/compare/{caseId}      (implemented — vector search over confirmed cases)
+ *   POST /api/studies/classify (2–10 slices), GET /api/studies/{id}, POST .../review, GET .../report   (implemented — multi-slice)
  * While environment.useMockData is true, the clinical calls return demo data from mock-data.ts instead.
  */
 @Injectable({ providedIn: 'root' })
@@ -178,6 +179,29 @@ export class ApiService {
       .pipe(catchError((err) => this.fail(err)));
   }
 
+  /** Uploads 2–10 slices of the same scan; each is classified separately and the results are combined. */
+  classifyStudy(req: StudyRequest): Observable<Study> {
+    if (environment.useMockData) return this.mock(mock.STUDY, 1500);
+    const form = new FormData();
+    for (const f of req.files) form.append('files', f);
+    form.append('patient_id', req.patient_id);
+    form.append('scan_date', req.scan_date);
+    form.append('sequence', req.sequence);
+    form.append('notes', req.notes);
+    return this.http.post<Study>(`${this.api}/studies/classify`, form, { headers: this.authHeaders() })
+      .pipe(catchError((err) => this.fail(err)));
+  }
+
+  getStudy(id: string): Observable<Study> {
+    return this.useMock(mock.STUDY) ?? this.get<Study>(`/studies/${encodeURIComponent(id)}`);
+  }
+
+  markStudyReviewed(id: string): Observable<Study> {
+    if (environment.useMockData) return this.mock({ ...mock.STUDY, status: 'Reviewed' as const });
+    return this.http.post<Study>(`${this.api}/studies/${encodeURIComponent(id)}/review`, {}, { headers: this.authHeaders() })
+      .pipe(catchError((err) => this.fail(err)));
+  }
+
   getScan(id: string): Observable<Scan> {
     return this.useMock(mock.scanById(id)) ?? this.get<Scan>(`/scans/${encodeURIComponent(id)}`);
   }
@@ -212,12 +236,21 @@ export class ApiService {
    * through a temporary link. Returns false in demo-data mode (nothing to download).
    */
   downloadReport(scanId: string): Observable<boolean> {
+    return this.downloadFile(`/scans/${encodeURIComponent(scanId)}/report`, `NeuroLens_${scanId}.docx`);
+  }
+
+  /** Downloads a multi-slice study's report (combined result, per-slice table, slices and heatmaps). */
+  downloadStudyReport(studyId: string): Observable<boolean> {
+    return this.downloadFile(`/studies/${encodeURIComponent(studyId)}/report`, `NeuroLens_${studyId}.docx`);
+  }
+
+  private downloadFile(path: string, fallbackName: string): Observable<boolean> {
     if (environment.useMockData) return this.mock(false);
-    return this.http.get(`${this.api}/scans/${encodeURIComponent(scanId)}/report`, {
+    return this.http.get(`${this.api}${path}`, {
       headers: this.authHeaders(), responseType: 'blob', observe: 'response',
     }).pipe(
       map((res) => {
-        const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? `NeuroLens_${scanId}.docx`;
+        const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? fallbackName;
         const url = URL.createObjectURL(res.body as Blob);
         const a = Object.assign(document.createElement('a'), { href: url, download: name });
         a.click();

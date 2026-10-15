@@ -180,3 +180,63 @@ def test_similarity_helpers():
 def test_system_info(client):
     info = client.get("/api/system/model").json()
     assert info["model"]["classes"] == "Benign · Malignant"
+
+
+# --- Multi-slice studies ---
+
+def classify_study(client, greys, patient_id="P-0001"):
+    files = [("files", (f"slice{i}.png", png_bytes(g), "image/png")) for i, g in enumerate(greys, 1)]
+    return client.post("/api/studies/classify", data={"patient_id": patient_id, "sequence": "T1"}, files=files)
+
+
+def test_study_combines_agreeing_slices(client):
+    client.post("/api/patients", json={"age": 58, "sex": "M"})
+    r = classify_study(client, [200, 198, 196])
+    assert r.status_code == 201, r.text
+    study = r.json()
+    assert study["id"].startswith("ST-") and study["slice_count"] == 3
+    assert study["prediction"] == "malignant" and study["slice_agreement"] == "3 / 3"
+    assert study["status"] == "Awaiting review" and "All 3 slices" in study["explanation"]
+    assert abs(sum(study["probabilities"].values()) - 1) < 1e-6
+    assert [s["slice_index"] for s in study["slices"]] == [1, 2, 3]
+
+    # every slice is a normal scan linked to the study
+    one = client.get(f"/api/scans/{study['slices'][0]['id']}").json()
+    assert one["study_id"] == study["id"] and one["image_url"]
+    assert client.get(f"/api/studies/{study['id']}").json()["slice_agreement"] == "3 / 3"
+
+    report = client.get(f"/api/studies/{study['id']}/report")
+    assert report.status_code == 200 and report.content[:2] == b"PK"
+
+
+def test_study_flags_disagreeing_slices_and_review_confirms_all(client):
+    client.post("/api/patients", json={"age": 47, "sex": "F"})
+    study = classify_study(client, [200, 195, 20]).json()          # malignant, malignant, benign
+    assert study["prediction"] == "malignant" and study["slice_agreement"] == "2 / 3"
+    assert study["status"] == "Flagged" and "disagree" in study["explanation"]
+
+    reviewed = client.post(f"/api/studies/{study['id']}/review").json()
+    assert reviewed["status"] == "Reviewed"
+    for s in database.get_scans_collection().find({"study_id": study["id"]}):
+        assert s["status"] == "Reviewed" and s["label"] == "malignant"   # one scan, one confirmed class
+
+
+def test_study_rejects_bad_requests(client):
+    client.post("/api/patients", json={"age": 40, "sex": "M"})
+    assert classify_study(client, [200]).status_code == 400                 # fewer than 2 slices
+    assert classify_study(client, [200] * 11).status_code == 400            # more than 10 slices
+    assert classify_study(client, [200, 190], patient_id="P-9999").status_code == 404
+    files = [("files", ("a.png", png_bytes(200), "image/png")), ("files", ("b.png", b"not an image", "image/png"))]
+    bad = client.post("/api/studies/classify", data={"patient_id": "P-0001"}, files=files)
+    assert bad.status_code == 400 and "b.png" in bad.json()["detail"]
+    assert database.get_scans_collection().count_documents({}) == 0       # nothing stored when a file is invalid
+    assert client.get("/api/studies/ST-2026-9999").status_code == 404
+
+
+def test_combine_slices():
+    from utils.studies import combine_slices
+    slices = [{"prediction": "a", "probabilities": {"a": 0.9, "b": 0.1}},
+              {"prediction": "b", "probabilities": {"a": 0.4, "b": 0.6}}]
+    out = combine_slices(slices)
+    assert out["prediction"] == "a" and abs(out["confidence"] - 0.65) < 1e-9
+    assert out["slice_agreement"] == "1 / 2" and out["status"] == "Flagged"

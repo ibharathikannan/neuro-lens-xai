@@ -17,6 +17,7 @@ from routers.routes import router
 from routers.auth_routes import router as auth_router
 from routers.patients import router as patients_router
 from routers.scans import router as scans_router
+from routers.studies import router as studies_router
 from routers.dashboard import router as dashboard_router
 from utils.config import CORS_ORIGINS, JWT_SECRET_KEY, STATIC_DIR
 from utils.database import ensure_indexes
@@ -55,6 +56,7 @@ app.include_router(router)
 app.include_router(auth_router)
 app.include_router(patients_router)
 app.include_router(scans_router)
+app.include_router(studies_router)
 app.include_router(dashboard_router)
 
 # Serve the built Angular dashboard from the same URL (present inside the Docker image)

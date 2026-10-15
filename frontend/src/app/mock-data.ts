@@ -1,7 +1,7 @@
 // Demo data, used ONLY by service.ts while environment.useMockData is true.
 // Every patient here is synthetic. Delete this file once all backend routes exist.
 import {
-  Comparison, DashboardSummary, Patient, PatientDetail, Report, Scan, SimilarResult, SystemInfo, TumorClass,
+  Comparison, DashboardSummary, Patient, PatientDetail, Report, Scan, SimilarResult, Study, SystemInfo, TumorClass,
 } from './models';
 
 const probs = (g: number, m: number, p: number, n: number): Record<TumorClass, number> =>
@@ -145,4 +145,18 @@ export const SYSTEM: SystemInfo = {
     { model: 'Custom CNN', track: 'B', config: 'tuned', accuracy: 0.912, macro_f1: 0.905, glioma_recall: 0.862, params: '1.21 M', latency_ms: 9, selected: false },
   ],
   comparison_is_placeholder: true,
+};
+
+/** Demo multi-slice study: three slices of one scan, one of which disagrees. */
+export const STUDY: Study = {
+  id: 'ST-2026-0007', patient_id: 'P-0128', date: '27 Sep 2026, 10:42', scan_date: '2026-09-27', sequence: 'T1-weighted, contrast-enhanced',
+  prediction: 'glioma', confidence: 0.781, probabilities: probs(0.781, 0.172, 0.031, 0.016),
+  slice_count: 3, slice_agreement: '2 / 3', status: 'Flagged', model_version: MODEL, report_path: '/api/studies/ST-2026-0007/report',
+  explanation: 'Combined result of 3 slices: Glioma, with an average confidence of 78.1%. 2 of 3 slices predict Glioma; the others predict ' +
+    'Meningioma. The slices disagree, so this study is flagged for careful review.',
+  slices: [
+    { ...SCAN_RESULT, id: 'S-2026-0343', study_id: 'ST-2026-0007', slice_index: 1 },
+    { ...scan('S-2026-0344', 'P-0128', '27 Sep 2026, 10:42', 'glioma', 0.902, probs(0.902, 0.071, 0.017, 0.01), 'Awaiting review', '4 / 5'), study_id: 'ST-2026-0007', slice_index: 2 },
+    { ...scan('S-2026-0345', 'P-0128', '27 Sep 2026, 10:42', 'meningioma', 0.596, probs(0.507, 0.596, 0.057, 0.032), 'Flagged', '2 / 5', { x: 0.55, y: 0.4, r: 0.08 }), study_id: 'ST-2026-0007', slice_index: 3 },
+  ],
 };
