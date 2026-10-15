@@ -182,6 +182,27 @@ def test_system_info(client):
     assert info["model"]["classes"] == "Benign · Malignant"
 
 
+def test_system_info_shows_model_comparison(client, tmp_path, monkeypatch):
+    import routers.dashboard as dashboard
+    csv_file = tmp_path / "final_comparison.csv"
+    csv_file.write_text("\n".join([
+        "model,track,config,test_accuracy,test_macro_f1,recall_glioma,params_M,size_MB,cpu_latency_ms",
+        "MobileNetV2,A,S2,0.9458,0.9432,0.9067,2.587,23.1,229.8",
+        "Fibonacci-Net,B,lr=0.001,0.9718,0.9709,0.9633,0.381,4.8,91.6",
+    ]))
+    monkeypatch.setattr(dashboard, "COMPARISON_CSV", str(csv_file))
+    monkeypatch.setattr(dashboard, "MODEL_DISPLAY_NAME", "Fibonacci-Net (lr=0.001)")
+    info = client.get("/api/system/model").json()
+    assert info["comparison_is_placeholder"] is False
+    first, second = info["comparison"]
+    assert first["model"] == "Fibonacci-Net" and first["selected"] is True and first["params"] == "0.38 M"
+    assert first["macro_f1"] == 0.9709 and first["latency_ms"] == 92 and second["selected"] is False
+
+    monkeypatch.setattr(dashboard, "COMPARISON_CSV", str(tmp_path / "missing.csv"))
+    empty = client.get("/api/system/model").json()
+    assert empty["comparison"] == [] and empty["comparison_is_placeholder"] is True
+
+
 # --- Multi-slice studies ---
 
 def classify_study(client, greys, patient_id="P-0001"):

@@ -21,7 +21,8 @@ backend/model_artifacts/
 # Not needed at runtime
 backend/tests/
 backend/requirements-dev.txt
-research/
+research/*
+!research/final_comparison.csv
 README.md
 .git/
 .github/

@@ -126,7 +126,7 @@ python app.py                                                   # dashboard + AP
 
 ```bash
 cd backend
-pytest -q          # 23 tests — in-memory database and a fake model, no internet or MongoDB needed
+pytest -q          # 24 tests — in-memory database and a fake model, no internet or MongoDB needed
 ```
 
 ### Troubleshooting

@@ -61,3 +61,10 @@ BLOB_URL_MINUTES = int(os.getenv("BLOB_URL_MINUTES", "60"))       # how long a r
 SIMILAR_K = int(os.getenv("SIMILAR_K", "5"))
 # MongoDB Atlas Vector Search is used when available; otherwise an exact search runs inside the API
 USE_ATLAS_VECTOR_SEARCH = os.getenv("USE_ATLAS_VECTOR_SEARCH", "true").lower() == "true"
+
+# --- Model comparison table shown on the Model & System page ---
+# The notebook's research/final_comparison.csv: copied into the Docker image as data/model_comparison.csv,
+# read straight from research/ when running locally.
+COMPARISON_CSV = os.getenv("COMPARISON_CSV") or next(
+    (p for p in ("data/model_comparison.csv", os.path.join("..", "research", "final_comparison.csv")) if os.path.exists(p)),
+    "data/model_comparison.csv")

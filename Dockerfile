@@ -38,6 +38,8 @@ RUN pip install -r requirements.txt
 # Copy the API code and the built dashboard (see .dockerignore for exclusions)
 COPY backend/ .
 COPY --from=frontend /frontend/dist/neurolens-dashboard/browser ./static
+# Model comparison table from the research notebook, shown on the Model & System page
+COPY research/final_comparison.csv ./data/model_comparison.csv
 
 # Run as a non-root user
 RUN useradd --create-home --uid 1000 appuser \

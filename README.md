@@ -52,13 +52,13 @@ Download or clone this repository to get the test images in [`test_data/`](test_
 | **Web application** | https://neurolens-xai.azurewebsites.net · source in [`backend/`](backend) (FastAPI) and [`frontend/`](frontend) (Angular) | Classification with heatmaps, similar cases and comparison, multi-slice studies, reports, patient records and user accounts |
 | **Test data** | [`test_data/`](test_data) | Held-out single slices and patient-grouped slices for trying the app |
 | **Deployment** | [`Dockerfile`](Dockerfile), [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | One Docker image built, tested and deployed to Azure automatically |
-| **Automated tests** | [`backend/tests/`](backend/tests) | 23 API tests (accounts, patients, classification, similar cases, multi-slice), run before every deployment |
+| **Automated tests** | [`backend/tests/`](backend/tests) | 24 API tests (accounts, patients, classification, similar cases, multi-slice), run before every deployment |
 
 ## 4. How it runs in the cloud
 
 ```
 GitHub (push to main)
-   └─ GitHub Actions: 23 tests → Docker build → Azure Container Registry → Azure Web App → check the live version
+   └─ GitHub Actions: 24 tests → Docker build → Azure Container Registry → Azure Web App → check the live version
 Azure Web App (one Docker container)
    ├─ Angular dashboard
    └─ FastAPI backend ── loads the model from Hugging Face at start-up
