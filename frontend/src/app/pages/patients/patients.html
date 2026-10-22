@@ -18,8 +18,8 @@
 
 <div class="card">
   <div class="row between wrap" style="margin-bottom: 14px">
-    <input class="input" style="max-width: 300px" placeholder="🔍 Search by patient ID…" [(ngModel)]="search" (ngModelChange)="onSearch()" aria-label="Search patients" />
-    <button class="btn btn-primary" type="button" (click)="adding.set(true)">＋ Add patient</button>
+    <div class="search"><app-icon name="search" [size]="16" /><input class="input" placeholder="Search by patient ID…" [(ngModel)]="search" (ngModelChange)="onSearch()" aria-label="Search patients" /></div>
+    <button class="btn btn-primary" type="button" (click)="adding.set(true)"><app-icon name="plus" [size]="16" /> Add patient</button>
   </div>
 
   @if (error()) {
@@ -40,7 +40,7 @@
             <td>{{ p.scans }}</td><td class="muted">{{ p.last_scan }}</td>
             <td>@if (p.last_result) { <app-class-chip [value]="p.last_result" /> } @else { <span class="muted">—</span> }</td>
             <td><app-status-chip [value]="p.status" /></td>
-            <td><a [routerLink]="['/patients', p.id]">Open →</a></td>
+            <td><a [routerLink]="['/patients', p.id]">Open <app-icon name="arrowRight" [size]="14" /></a></td>
           </tr>
         }
       </tbody>

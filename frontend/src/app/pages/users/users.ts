@@ -4,6 +4,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 
 import { ApiService } from '../../service';
 import { User, UserUpdate } from '../../models';
+import { Icon } from '../../shared/icon';
 
 /** Same rule as the backend: at least 8 characters with a letter and a number. */
 function strongPassword(c: AbstractControl): ValidationErrors | null {
@@ -14,7 +15,7 @@ function strongPassword(c: AbstractControl): ValidationErrors | null {
 /** Administrators add team members and disable accounts (works while self-registration is switched off). */
 @Component({
   selector: 'app-users',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, Icon],
   templateUrl: './users.html',
   styles: `
     .add { grid-template-columns: 1.2fr 1.4fr 1fr 150px; align-items: start; }

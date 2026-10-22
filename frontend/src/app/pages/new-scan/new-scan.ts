@@ -4,23 +4,27 @@ import { Router } from '@angular/router';
 
 import { ApiService } from '../../service';
 import { Patient } from '../../models';
+import { Icon } from '../../shared/icon';
 
 const MAX_MB = 10;
 const MAX_SLICES = 10;
 
 @Component({
   selector: 'app-new-scan',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, Icon],
   templateUrl: './new-scan.html',
   styles: `
     .layout { grid-template-columns: 1fr 1.3fr; }
     .steps { display: flex; gap: 8px; margin-bottom: 18px; }
-    .step { flex: 1; padding: 10px 12px; border-radius: 8px; background: #fff; border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
-    .step.done { border-color: #bfe0cc; background: #f1faf5; color: var(--ok); }
-    .step.now { border-color: #9fb9e2; background: var(--sky); color: var(--navy); font-weight: 600; }
-    .dropzone { border: 2px dashed #b9c7df; border-radius: 12px; background: #f8fafe; padding: 30px; text-align: center; color: var(--muted); flex: 1;
-                display: flex; flex-direction: column; justify-content: center; gap: 6px; cursor: pointer; }
+    .step { flex: 1; display: flex; align-items: center; gap: 6px; padding: 11px 14px; border-radius: 10px; background: #fff; border: 1px solid var(--line);
+            font-size: 12.5px; font-weight: 500; color: var(--muted); box-shadow: var(--shadow-card); }
+    .step.done { border-color: #b6dcc6; background: #f2faf6; color: var(--ok); }
+    .step.now { border-color: #9dbbe8; background: var(--sky); color: var(--navy); font-weight: 600; box-shadow: 0 0 0 3px rgba(44, 103, 196, .1); }
+    .dropzone { border: 2px dashed #b3c4de; border-radius: 14px; background: #f8fafe; padding: 34px 30px; text-align: center; color: var(--muted); flex: 1;
+                display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: border-color .15s, background-color .15s; }
+    .dropzone:hover { border-color: var(--blue); background: #f3f7fd; }
     .dropzone.over { border-color: var(--navy); background: var(--sky); }
+    .dz-ico { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--sky); color: var(--navy); margin-bottom: 6px; box-shadow: inset 0 0 0 1px var(--sky-2); }
     .preview { width: 210px; height: 210px; object-fit: cover; border-radius: 10px; background: #000; display: block; }
     .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin-top: 14px; }
     .thumb { position: relative; }

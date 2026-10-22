@@ -6,13 +6,14 @@ import { ApiService } from '../../service';
 import { classColor, classLabel, Scan, TumorClass } from '../../models';
 import { ClassChip, StatusChip } from '../../shared/chips';
 import { MriImage } from '../../shared/mri-image';
+import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-result',
-  imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage],
+  imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage, Icon],
   templateUrl: './result.html',
   styles: `
-    .layout { grid-template-columns: 1.35fr 1fr; }
+    .layout { grid-template-columns: 1.35fr 1fr; align-items: start; }
     .big { font-size: 26px; font-weight: 700; }
     @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
   `,

@@ -20,7 +20,7 @@
           <div>Status</div><div><app-status-chip [value]="p.status" /></div>
         </div>
         <div class="row mt">
-          <a class="btn btn-primary" routerLink="/new-scan" [queryParams]="{ patient: p.id }">＋ New classification</a>
+          <a class="btn btn-primary" routerLink="/new-scan" [queryParams]="{ patient: p.id }"><app-icon name="plus" [size]="16" /> New classification</a>
         </div>
       </div>
       <div class="card">

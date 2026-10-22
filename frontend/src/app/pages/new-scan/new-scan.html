@@ -1,6 +1,6 @@
 <div class="steps">
-  <div class="step" [class.done]="step() > 1" [class.now]="step() === 1">{{ step() > 1 ? '✓' : '' }} 1. Select patient</div>
-  <div class="step" [class.done]="step() > 2" [class.now]="step() === 2">{{ step() > 2 ? '✓' : '' }} 2. Upload MRI scan</div>
+  <div class="step" [class.done]="step() > 1" [class.now]="step() === 1">@if (step() > 1) { <app-icon name="check" [size]="14" /> } 1. Select patient</div>
+  <div class="step" [class.done]="step() > 2" [class.now]="step() === 2">@if (step() > 2) { <app-icon name="check" [size]="14" /> } 2. Upload MRI scan</div>
   <div class="step" [class.now]="step() === 3">3. Classify &amp; explain</div>
   <div class="step">4. Report &amp; save</div>
 </div>
@@ -43,7 +43,7 @@
     </h3>
     <label class="dropzone" [class.over]="dragOver()"
            (dragover)="$event.preventDefault(); dragOver.set(true)" (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
-      <div style="font-size: 30px">⬆</div>
+      <span class="dz-ico"><app-icon name="upload" [size]="24" /></span>
       <b style="color: var(--text)">Drag &amp; drop one MRI slice, or 2–{{ maxSlices }} slices from the same scan</b>
       <div class="small">or click to browse · JPG or PNG</div>
       <input type="file" accept="image/png,image/jpeg" multiple hidden (change)="onFileInput($event)" />

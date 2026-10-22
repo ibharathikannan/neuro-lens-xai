@@ -3,11 +3,14 @@ import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, Ro
 import { filter } from 'rxjs';
 
 import { ApiService } from '../service';
+import { Icon, IconName } from '../shared/icon';
 import { environment } from '../../environments/environment';
+
+interface NavItem { path: string; icon: IconName; label: string; }
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
@@ -18,23 +21,38 @@ export class Shell implements OnInit {
 
   protected readonly title = signal('');
   protected readonly crumb = signal('');
+  protected readonly menuOpen = signal(false);
   protected readonly mockMode = environment.useMockData;
   protected readonly initials = computed(() =>
     (this.api.currentUser()?.full_name ?? '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join(''));
 
-  protected readonly nav = [
-    { path: '/dashboard', icon: '▦', label: 'Dashboard' },
-    { path: '/patients', icon: '👥', label: 'Patients' },
-    { path: '/new-scan', icon: '＋', label: 'New Classification' },
-    { path: '/similar', icon: '⧉', label: 'Similar Cases' },
-    { path: '/reports', icon: '🗎', label: 'Reports' },
-    { path: '/system', icon: '⚙', label: 'Model & System' },
-  ];
-  protected readonly adminNav = [{ path: '/users', icon: '🔑', label: 'Users' }];
+  /** Sidebar sections; the Administration section is only shown to administrators. */
+  protected readonly groups = computed<{ label: string; items: NavItem[] }[]>(() => [
+    {
+      label: 'Workspace',
+      items: [
+        { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
+        { path: '/patients', icon: 'patients', label: 'Patients' },
+        { path: '/new-scan', icon: 'scan', label: 'New Classification' },
+      ],
+    },
+    {
+      label: 'Analysis',
+      items: [
+        { path: '/similar', icon: 'similar', label: 'Similar Cases' },
+        { path: '/reports', icon: 'reports', label: 'Reports' },
+      ],
+    },
+    { label: 'System', items: [{ path: '/system', icon: 'system', label: 'Model & System' }] },
+    ...(this.api.isAdmin() ? [{ label: 'Administration', items: [{ path: '/users', icon: 'admin' as IconName, label: 'Users' }] }] : []),
+  ]);
 
   ngOnInit(): void {
     this.updateTitle();
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => this.updateTitle());
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
+      this.updateTitle();
+      this.menuOpen.set(false);
+    });
     // Confirm the stored token is still accepted by the backend (logs out on 401)
     this.api.loadCurrentUser().subscribe({ error: () => undefined });
   }

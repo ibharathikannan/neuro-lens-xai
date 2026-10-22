@@ -1,25 +1,35 @@
 .login-wrap { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
-.login-left { background: linear-gradient(150deg, #1f3864, #2f5597 60%, #5b8fd8); color: #fff; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; }
-.login-left h2 { font-size: 34px; margin: 0 0 14px; line-height: 1.2; }
-.login-left p { color: #d6e2f5; max-width: 470px; line-height: 1.6; }
-.brand { display: flex; align-items: center; gap: 14px; font-size: 24px; font-weight: 700; letter-spacing: .01em; }
-.brand small { display: block; font-size: 12px; font-weight: 500; color: #b9cbe8; letter-spacing: .02em; }
-.logo { width: 56px; height: 56px; display: block; flex-shrink: 0; border-radius: 14px; box-shadow: 0 6px 18px rgba(0, 0, 0, .28); }
-.card-logo { width: 64px; height: 64px; display: block; border-radius: 16px; margin-bottom: 18px; box-shadow: 0 6px 18px rgba(31, 56, 100, .25); }
-.pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
-.pill { background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .25); padding: 6px 12px; border-radius: 999px; font-size: 12px; }
-.fine { font-size: 12px; color: #b9cbe8; }
-.login-right { display: grid; place-items: center; background: #fff; padding: 40px 20px; }
+.login-left {
+  position: relative; overflow: hidden; color: #fff; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between;
+  background:
+    radial-gradient(52rem 28rem at 90% -8%, rgba(95, 160, 245, .38), transparent 62%),
+    linear-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(90deg, rgba(255, 255, 255, .045) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(155deg, #0e2145, #17325f 55%, #234b8f);
+}
+.login-left h2 { font-size: 36px; margin: 0 0 16px; line-height: 1.18; letter-spacing: -.02em; }
+.login-left p { color: #cfdcf2; max-width: 480px; line-height: 1.65; font-size: 15px; }
+.brand { display: flex; align-items: center; gap: 14px; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+.brand small { display: block; font-size: 12px; font-weight: 500; color: #a9bddf; letter-spacing: .01em; }
+.logo { width: 52px; height: 52px; display: block; flex-shrink: 0; border-radius: 14px; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
+.card-logo { width: 52px; height: 52px; display: block; border-radius: 14px; margin-bottom: 22px; box-shadow: 0 6px 16px rgba(23, 50, 95, .22); }
+.pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
+.pill { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .2); padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 500; backdrop-filter: blur(4px); }
+.fine { font-size: 12px; color: #a9bddf; }
+.login-right { display: grid; place-items: center; background: #fff; padding: 40px 24px; }
 .login-card { width: 100%; max-width: 380px; }
-.login-card h2 { margin: 0 0 6px; }
-.login-card > p { margin: 0 0 24px; color: var(--muted); }
-.switch { margin-top: 22px; text-align: center; font-size: 13px; color: var(--muted); }
+.login-card h2 { margin: 0 0 6px; font-size: 26px; letter-spacing: -.02em; }
+.login-card > p { margin: 0 0 28px; color: var(--muted); }
+.login-card > p.switch { margin: 24px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
 .pw { position: relative; }
-.pw button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--blue); font: inherit; font-size: 12px; cursor: pointer; }
+.pw .input { padding-right: 58px; }
+.pw button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--blue); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 6px 8px; border-radius: 6px; }
+.pw button:hover { background: var(--sky); }
 .hint { font-size: 12px; color: var(--muted); }
 
 @media (max-width: 900px) {
   .login-wrap { grid-template-columns: 1fr; }
-  .login-left { padding: 32px 24px; }
+  .login-left { padding: 28px 24px; gap: 28px; }
   .login-left h2 { font-size: 26px; }
+  .login-left .fine { display: none; }
 }

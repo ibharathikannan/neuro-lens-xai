@@ -5,10 +5,10 @@
 } @else {
   @let d = data()!;
   <div class="grid kpis">
-    <div class="card kpi"><span class="label">Patients</span><span class="value">{{ d.patients }}</span><span class="delta">▲ {{ d.patients_this_month }} this month</span></div>
-    <div class="card kpi"><span class="label">Scans classified</span><span class="value">{{ d.scans }}</span><span class="delta">▲ {{ d.scans_this_month }} this month</span></div>
-    <div class="card kpi"><span class="label">Reports generated</span><span class="value">{{ d.reports }}</span><span class="delta">stored in Azure Blob</span></div>
-    <div class="card kpi"><span class="label">Avg. inference time</span><span class="value">{{ d.avg_inference_seconds }} s</span><span class="delta muted">incl. Grad-CAM &amp; retrieval</span></div>
+    <div class="card kpi"><span class="kpi-icon"><app-icon name="patients" [size]="20" /></span><span class="label">Patients</span><span class="value">{{ d.patients }}</span><span class="delta"><app-icon name="trendUp" [size]="14" /> {{ d.patients_this_month }} this month</span></div>
+    <div class="card kpi"><span class="kpi-icon"><app-icon name="scan" [size]="20" /></span><span class="label">Scans classified</span><span class="value">{{ d.scans }}</span><span class="delta"><app-icon name="trendUp" [size]="14" /> {{ d.scans_this_month }} this month</span></div>
+    <div class="card kpi"><span class="kpi-icon"><app-icon name="reports" [size]="20" /></span><span class="label">Reports generated</span><span class="value">{{ d.reports }}</span><span class="delta">stored in Azure Blob</span></div>
+    <div class="card kpi"><span class="kpi-icon"><app-icon name="system" [size]="20" /></span><span class="label">Avg. inference time</span><span class="value">{{ d.avg_inference_seconds }} s</span><span class="delta muted">incl. Grad-CAM &amp; retrieval</span></div>
   </div>
 
   <div class="grid charts mt">
@@ -71,7 +71,7 @@
             <td><app-class-chip [value]="s.prediction" /></td>
             <td>{{ s.confidence | percent: '1.1-1' }} @if (s.confidence < 0.7) { <span class="chip c-warn">review</span> }</td>
             <td>{{ s.similar_agreement }}</td>
-            <td><a [routerLink]="['/scans', s.id]">Open →</a></td>
+            <td><a [routerLink]="['/scans', s.id]">Open <app-icon name="arrowRight" [size]="14" /></a></td>
           </tr>
         }
       </tbody>

@@ -49,7 +49,7 @@
 <div class="card">
   <div class="row between wrap" style="margin-bottom: 14px">
     <h3 style="margin: 0">Team accounts</h3>
-    @if (!adding()) { <button class="btn btn-primary" type="button" (click)="adding.set(true)">＋ Add user</button> }
+    @if (!adding()) { <button class="btn btn-primary" type="button" (click)="adding.set(true)"><app-icon name="plus" [size]="16" /> Add user</button> }
   </div>
 
   @if (error()) { <div class="alert alert-error">{{ error() }}</div> }

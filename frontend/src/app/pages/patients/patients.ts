@@ -5,10 +5,11 @@ import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../service';
 import { Patient } from '../../models';
 import { ClassChip, StatusChip } from '../../shared/chips';
+import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-patients',
-  imports: [RouterLink, FormsModule, ReactiveFormsModule, ClassChip, StatusChip],
+  imports: [RouterLink, FormsModule, ReactiveFormsModule, ClassChip, StatusChip, Icon],
   templateUrl: './patients.html',
 })
 export class Patients {

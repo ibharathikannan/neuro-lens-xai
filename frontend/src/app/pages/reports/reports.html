@@ -13,13 +13,13 @@
   <div class="card mt">
     <div class="row between wrap" style="margin-bottom: 14px">
       <div class="row wrap">
-        <input class="input" style="width: 260px" placeholder="🔍 Search report, patient or scan…" [ngModel]="search()" (ngModelChange)="search.set($event)" aria-label="Search reports" />
+        <div class="search"><app-icon name="search" [size]="16" /><input class="input" placeholder="Search report, patient or scan…" [ngModel]="search()" (ngModelChange)="search.set($event)" aria-label="Search reports" /></div>
         <select class="input" style="width: 170px" [ngModel]="classFilter()" (ngModelChange)="classFilter.set($event)" aria-label="Filter by class">
           <option value="">Class: All</option>
           @for (c of classes(); track c[0]) { <option [value]="c[0]">{{ c[1] }}</option> }
         </select>
       </div>
-      <button class="btn btn-outline" type="button" (click)="exportCsv()">⤓ Export list (CSV)</button>
+      <button class="btn btn-outline" type="button" (click)="exportCsv()"><app-icon name="download" [size]="16" /> Export list (CSV)</button>
     </div>
     <table>
       <thead><tr><th>Report</th><th>Patient</th><th>Scan</th><th>Result</th><th>Created</th><th>Blob path</th><th>Size</th><th></th></tr></thead>
@@ -33,7 +33,7 @@
             <td class="muted">{{ r.created }}</td>
             <td class="mono">{{ r.blob_path }}</td>
             <td>{{ r.size }}</td>
-            <td><a (click)="download(r)">Download ⤓</a></td>
+            <td><a class="dl" (click)="download(r)"><app-icon name="download" [size]="14" /> Download</a></td>
           </tr>
         } @empty {
           <tr><td colspan="8" class="muted">No reports match the filters.</td></tr>

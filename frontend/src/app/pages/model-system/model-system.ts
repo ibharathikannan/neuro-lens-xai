@@ -3,10 +3,11 @@ import { DecimalPipe } from '@angular/common';
 
 import { ApiService } from '../../service';
 import { ServiceStatus, SystemInfo } from '../../models';
+import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-model-system',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, Icon],
   templateUrl: './model-system.html',
   styles: `
     .layout { grid-template-columns: 1.2fr 1fr; }

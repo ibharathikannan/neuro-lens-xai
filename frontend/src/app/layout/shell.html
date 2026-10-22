@@ -1,17 +1,20 @@
 <div class="app">
-  <aside class="side">
+  @if (menuOpen()) { <div class="scrim" (click)="menuOpen.set(false)"></div> }
+
+  <aside class="side" [class.open]="menuOpen()">
     <div class="brand">
       <img class="logo" src="logo.svg" alt="" />
       <div>NeuroLens<small>Brain Tumor MRI Support</small></div>
+      <button class="close" type="button" aria-label="Close menu" (click)="menuOpen.set(false)"><app-icon name="close" [size]="20" /></button>
     </div>
-    <nav class="nav">
-      @for (item of nav; track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active"><span class="ico">{{ item.icon }}</span>{{ item.label }}</a>
-      }
-      @if (api.isAdmin()) {
-        @for (item of adminNav; track item.path) {
-          <a [routerLink]="item.path" routerLinkActive="active"><span class="ico">{{ item.icon }}</span>{{ item.label }}</a>
-        }
+    <nav class="nav" aria-label="Main">
+      @for (group of groups(); track group.label) {
+        <div class="nav-group">
+          <div class="nav-label">{{ group.label }}</div>
+          @for (item of group.items; track item.path) {
+            <a [routerLink]="item.path" routerLinkActive="active"><app-icon [name]="item.icon" />{{ item.label }}</a>
+          }
+        </div>
       }
     </nav>
     <div class="foot">v0.1 · Research prototype</div>
@@ -19,7 +22,8 @@
 
   <div class="main">
     <header class="top">
-      <div>
+      <button class="menu-btn" type="button" aria-label="Open menu" (click)="menuOpen.set(true)"><app-icon name="menu" [size]="22" /></button>
+      <div class="titles">
         <div class="crumb">{{ crumb() }}</div>
         <h1>{{ title() }}</h1>
       </div>
@@ -27,17 +31,18 @@
       @if (api.currentUser(); as user) {
         <a class="user" routerLink="/account" title="My account · change password">
           <div class="avatar">{{ initials() }}</div>
-          <div>
+          <div class="who">
             <b>{{ user.full_name }}</b>
             <div class="muted small">{{ user.role === 'admin' ? 'Administrator' : 'Clinician' }} · {{ user.email }}</div>
           </div>
         </a>
       }
-      <button class="btn btn-outline" type="button" (click)="api.logout()">Log out</button>
+      <button class="btn btn-outline btn-sm" type="button" (click)="api.logout()"><app-icon name="logout" [size]="16" />Log out</button>
     </header>
     <div class="disclaimer">
-      ⚠ Research prototype — not a diagnostic device. All patients shown are synthetic demo records.
-      @if (mockMode) { <b>Demo data mode:</b> clinical pages use sample data until the backend routes are available. }
+      <app-icon name="info" [size]="15" />
+      <span>Research prototype — not a diagnostic device. All patients shown are synthetic demo records.</span>
+      @if (mockMode) { <span class="demo-chip">Demo data</span> }
     </div>
     <main class="content">
       <router-outlet />

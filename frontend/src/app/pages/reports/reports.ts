@@ -5,10 +5,11 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../../service';
 import { Report, TumorClass, classLabel } from '../../models';
 import { ClassChip } from '../../shared/chips';
+import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-reports',
-  imports: [FormsModule, RouterLink, ClassChip],
+  imports: [FormsModule, RouterLink, ClassChip, Icon],
   templateUrl: './reports.html',
   styles: `.kpis { grid-template-columns: repeat(3, 1fr); } @media (max-width: 900px) { .kpis { grid-template-columns: 1fr; } }`,
 })

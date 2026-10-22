@@ -40,9 +40,9 @@
         <h3>Report</h3>
         <p class="small muted" style="margin-top: 0">Word report with the combined result, every slice and its heatmap, generated on download.</p>
         <div class="row wrap" style="gap: 10px">
-          <button class="btn btn-primary" type="button" (click)="download()">⤓ Download report</button>
+          <button class="btn btn-primary" type="button" (click)="download()"><app-icon name="download" [size]="16" /> Download report</button>
           @if (st.status !== 'Reviewed') {
-            <button class="btn btn-light" type="button" (click)="markReviewed()" [disabled]="busy()">✓ Mark study reviewed</button>
+            <button class="btn btn-light" type="button" (click)="markReviewed()" [disabled]="busy()"><app-icon name="check" [size]="16" /> Mark study reviewed</button>
           }
         </div>
         @if (st.status !== 'Reviewed') {

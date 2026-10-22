@@ -6,11 +6,12 @@ import { ApiService } from '../../service';
 import { classColor, classLabel, Study, TumorClass } from '../../models';
 import { ClassChip, StatusChip } from '../../shared/chips';
 import { MriImage } from '../../shared/mri-image';
+import { Icon } from '../../shared/icon';
 
 /** Result of a multi-slice study: the combined prediction plus every slice with its own heatmap. */
 @Component({
   selector: 'app-study',
-  imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage],
+  imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage, Icon],
   templateUrl: './study.html',
   styles: `
     .layout { grid-template-columns: 1fr 1.6fr; align-items: start; }

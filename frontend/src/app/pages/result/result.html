@@ -52,14 +52,14 @@
       <div class="card">
         <h3>Report</h3>
         <div class="row wrap" style="margin-bottom: 10px">
-          <span class="chip c-ok">✓ Result saved</span><span class="chip c-info">Word report · generated on download</span>
+          <span class="chip c-ok">Result saved</span><span class="chip c-info">Word report · generated on download</span>
         </div>
         @if (s.report_path) { <div class="mono" style="margin-bottom: 14px">{{ s.report_path }}</div> }
         <div class="row wrap" style="gap: 10px">
-          <button class="btn btn-primary" type="button" (click)="download()">⤓ Download report</button>
-          <a class="btn btn-outline" [routerLink]="['/scans', s.id, 'similar']">⧉ Find similar cases</a>
+          <button class="btn btn-primary btn-sm" type="button" (click)="download()"><app-icon name="download" [size]="16" /> Download report</button>
+          <a class="btn btn-outline btn-sm" [routerLink]="['/scans', s.id, 'similar']"><app-icon name="similar" [size]="16" /> Find similar cases</a>
           @if (s.status !== 'Reviewed') {
-            <button class="btn btn-light" type="button" (click)="markReviewed()" [disabled]="busy()">✓ Mark reviewed</button>
+            <button class="btn btn-light btn-sm" type="button" (click)="markReviewed()" [disabled]="busy()"><app-icon name="check" [size]="16" /> Mark reviewed</button>
           }
         </div>
       </div>
