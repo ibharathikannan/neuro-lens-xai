@@ -1,35 +1,34 @@
+/* Shared by the sign-in and create-account pages. The branded left panel lives in shared/auth-aside. */
 .login-wrap { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
-.login-left {
-  position: relative; overflow: hidden; color: #fff; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between;
-  background:
-    radial-gradient(52rem 28rem at 90% -8%, rgba(95, 160, 245, .38), transparent 62%),
-    linear-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px) 0 0 / 44px 44px,
-    linear-gradient(90deg, rgba(255, 255, 255, .045) 1px, transparent 1px) 0 0 / 44px 44px,
-    linear-gradient(155deg, #0e2145, #17325f 55%, #234b8f);
-}
-.login-left h2 { font-size: 36px; margin: 0 0 16px; line-height: 1.18; letter-spacing: -.02em; }
-.login-left p { color: #cfdcf2; max-width: 480px; line-height: 1.65; font-size: 15px; }
-.brand { display: flex; align-items: center; gap: 14px; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
-.brand small { display: block; font-size: 12px; font-weight: 500; color: #a9bddf; letter-spacing: .01em; }
-.logo { width: 52px; height: 52px; display: block; flex-shrink: 0; border-radius: 14px; box-shadow: 0 6px 18px rgba(0, 0, 0, .3); }
-.card-logo { width: 52px; height: 52px; display: block; border-radius: 14px; margin-bottom: 22px; box-shadow: 0 6px 16px rgba(23, 50, 95, .22); }
-.pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
-.pill { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .2); padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 500; backdrop-filter: blur(4px); }
-.fine { font-size: 12px; color: #a9bddf; }
+
 .login-right { display: grid; place-items: center; background: #fff; padding: 40px 24px; }
-.login-card { width: 100%; max-width: 380px; }
-.login-card h2 { margin: 0 0 6px; font-size: 26px; letter-spacing: -.02em; }
-.login-card > p { margin: 0 0 28px; color: var(--muted); }
-.login-card > p.switch { margin: 24px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
-.pw { position: relative; }
-.pw .input { padding-right: 58px; }
-.pw button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--blue); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 6px 8px; border-radius: 6px; }
-.pw button:hover { background: var(--sky); }
+.login-card { width: 100%; max-width: 400px; }
+.card-logo { display: none; width: 48px; height: 48px; border-radius: 13px; margin-bottom: 20px; box-shadow: 0 6px 16px rgba(23, 50, 95, .22); }
+.login-card h2 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.02em; }
+.login-card > h2 + p { margin: 0 0 28px; color: var(--muted); font-size: 14.5px; }
+
+/* inputs with a leading icon (and an optional trailing toggle) */
+.with-icon { position: relative; }
+.with-icon > app-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #8493a8; pointer-events: none; transition: color .15s; }
+.with-icon .input { padding-left: 40px; min-height: 44px; }
+.with-icon:focus-within > app-icon { color: var(--blue); }
+.with-icon .toggle {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: grid; place-items: center;
+  border: 0; background: none; color: #6b7c93; border-radius: 8px; cursor: pointer; transition: background-color .15s, color .15s;
+}
+.with-icon .toggle:hover { background: var(--sky); color: var(--navy); }
+.with-icon .toggle:focus-visible { outline: none; box-shadow: var(--ring); }
+.with-icon .toggle ~ .input, .with-icon .input:has(+ .toggle) { padding-right: 46px; }
+
+.btn-block { margin-top: 6px; }
+.divider { height: 1px; background: var(--line); margin: 26px 0 20px; }
+.switch { margin: 0; text-align: center; font-size: 13.5px; color: var(--muted); }
+.switch a { font-weight: 600; }
+.legal { margin: 18px 0 0; text-align: center; font-size: 11.5px; color: #8a97ab; }
 .hint { font-size: 12px; color: var(--muted); }
 
 @media (max-width: 900px) {
   .login-wrap { grid-template-columns: 1fr; }
-  .login-left { padding: 28px 24px; gap: 28px; }
-  .login-left h2 { font-size: 26px; }
-  .login-left .fine { display: none; }
+  .login-right { padding: 28px 20px 40px; place-items: start center; }
+  .login-card h2 { font-size: 24px; }
 }

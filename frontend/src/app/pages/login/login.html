@@ -1,51 +1,53 @@
 <div class="login-wrap">
-  <section class="login-left">
-    <div class="brand"><img class="logo" src="logo.svg" alt="" /><div>NeuroLens<small>Explainable brain tumor MRI support</small></div></div>
-    <div>
-      <h2>Explainable, case-grounded<br />brain tumor MRI classification</h2>
-      <p>Classify MRI scans into glioma, meningioma, pituitary tumor or no tumor, see where the model looked, compare with similar
-        confirmed cases, and keep every patient's results and reports in one place.</p>
-      <div class="pill-row">
-        <span class="pill">Grad-CAM explanations</span><span class="pill">Similar-case retrieval</span>
-        <span class="pill">Automated reports</span><span class="pill">Patient records</span>
-      </div>
-    </div>
-    <div class="fine">Research prototype — not a diagnostic device · NUS-ISS PRS Practice Module</div>
-  </section>
+  <app-auth-aside>
+    <h2>Explainable, case-grounded<br />brain tumor MRI classification</h2>
+    <p>Classify MRI scans into glioma, meningioma, pituitary tumor or no tumor, see where the model looked, compare with similar
+      confirmed cases, and keep every patient's results and reports in one place.</p>
+  </app-auth-aside>
 
   <section class="login-right">
     <form class="login-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <img class="card-logo" src="logo.svg" alt="NeuroLens" />
-      <h2>Sign in</h2>
-      <p>Use your NeuroLens account.</p>
+      <h2>Welcome back</h2>
+      <p>Sign in to your NeuroLens account to continue.</p>
 
       @if (error()) { <div class="alert alert-error" role="alert">{{ error() }}</div> }
 
       <div class="field">
         <label for="email">Email</label>
-        <input id="email" class="input" type="email" formControlName="email" autocomplete="email" [class.invalid]="invalid('email')" />
+        <div class="with-icon">
+          <app-icon name="mail" [size]="17" />
+          <input id="email" class="input" type="email" formControlName="email" autocomplete="email" placeholder="you@hospital.org"
+                 [class.invalid]="invalid('email')" />
+        </div>
         @if (invalid('email')) { <span class="field-error">Enter a valid email address.</span> }
       </div>
 
       <div class="field">
         <label for="password">Password</label>
-        <div class="pw">
+        <div class="with-icon">
+          <app-icon name="lock" [size]="17" />
           <input id="password" class="input" [type]="showPassword() ? 'text' : 'password'" formControlName="password"
-                 autocomplete="current-password" [class.invalid]="invalid('password')" />
-          <button type="button" (click)="showPassword.set(!showPassword())">{{ showPassword() ? 'Hide' : 'Show' }}</button>
+                 autocomplete="current-password" placeholder="Enter your password" [class.invalid]="invalid('password')" />
+          <button type="button" class="toggle" (click)="showPassword.set(!showPassword())"
+                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPassword()">
+            <app-icon [name]="showPassword() ? 'eyeOff' : 'eye'" [size]="17" />
+          </button>
         </div>
         @if (invalid('password')) { <span class="field-error">Enter your password.</span> }
       </div>
 
       <button class="btn btn-primary btn-block" type="submit" [disabled]="loading()">
-        @if (loading()) { <span class="spinner"></span> } Sign in
+        @if (loading()) { <span class="spinner"></span> Signing in… } @else { Sign in <app-icon name="arrowRight" [size]="17" /> }
       </button>
 
+      <div class="divider"></div>
       @if (allowRegistration()) {
         <p class="switch">New to NeuroLens? <a routerLink="/register">Create an account</a></p>
       } @else {
         <p class="switch">Need an account? Ask your NeuroLens administrator.</p>
       }
+      <p class="legal">Research prototype · use synthetic patient data only</p>
     </form>
   </section>
 </div>

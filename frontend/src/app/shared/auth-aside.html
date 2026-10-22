@@ -1,0 +1,42 @@
+<section class="aside">
+  <div class="brand">
+    <img class="logo" src="logo.svg" alt="" />
+    <div>NeuroLens<small>Explainable brain tumor MRI support</small></div>
+  </div>
+
+  <div class="middle">
+    <div class="intro">
+      <ng-content />
+    </div>
+
+    <div class="preview" aria-hidden="true">
+      <div class="preview-head"><span>Model explanation</span><span class="sample">Sample · synthetic image</span></div>
+      <div class="preview-body">
+        <div class="pair">
+          <app-mri-image [size]="112" alt="" />
+          <app-mri-image [size]="112" [heatmap]="true" alt="" />
+        </div>
+        <div class="probs">
+          <div class="pred"><span class="chip c-glioma">Glioma</span><b>93.4%</b></div>
+          @for (b of bars; track b.label) {
+            <div class="prow">
+              <span>{{ b.label }}</span>
+              <div class="bar"><span [style.width.%]="b.pct" [style.background]="b.color"></span></div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <ul class="features">
+      @for (f of features; track f.title) {
+        <li>
+          <span class="f-ico"><app-icon [name]="f.icon" [size]="18" /></span>
+          <div><b>{{ f.title }}</b><span>{{ f.text }}</span></div>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="fine">{{ fine() }}</div>
+</section>

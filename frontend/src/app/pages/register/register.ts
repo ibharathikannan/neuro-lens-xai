@@ -3,6 +3,8 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../../service';
+import { AuthAside } from '../../shared/auth-aside';
+import { Icon } from '../../shared/icon';
 
 /** Same rule as the backend: at least 8 characters with a letter and a number. */
 function strongPassword(c: AbstractControl): ValidationErrors | null {
@@ -16,7 +18,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AuthAside, Icon],
   templateUrl: './register.html',
   styleUrl: '../auth-layout.scss',
 })
@@ -33,6 +35,7 @@ export class Register {
 
   protected readonly loading = signal(false);
   protected readonly error = signal('');
+  protected readonly showPassword = signal(false);
 
   protected invalid(name: 'full_name' | 'email' | 'password' | 'confirm'): boolean {
     const c = this.form.controls[name];

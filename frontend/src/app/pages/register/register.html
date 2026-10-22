@@ -1,13 +1,9 @@
 <div class="login-wrap">
-  <section class="login-left">
-    <div class="brand"><img class="logo" src="logo.svg" alt="" /><div>NeuroLens<small>Explainable brain tumor MRI support</small></div></div>
-    <div>
-      <h2>Create your<br />NeuroLens account</h2>
-      <p>Accounts give clinicians and administrators access to patient records, classification results, explanations and reports.
-        The first account created becomes the administrator.</p>
-    </div>
-    <div class="fine">Research prototype — use synthetic patient data only.</div>
-  </section>
+  <app-auth-aside fine="Research prototype — use synthetic patient data only.">
+    <h2>Create your<br />NeuroLens account</h2>
+    <p>Accounts give clinicians and administrators access to patient records, classification results, explanations and reports.
+      The first account created becomes the administrator.</p>
+  </app-auth-aside>
 
   <section class="login-right">
     <form class="login-card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
@@ -19,19 +15,33 @@
 
       <div class="field">
         <label for="full_name">Full name</label>
-        <input id="full_name" class="input" formControlName="full_name" autocomplete="name" [class.invalid]="invalid('full_name')" />
+        <div class="with-icon">
+          <app-icon name="account" [size]="17" />
+          <input id="full_name" class="input" formControlName="full_name" autocomplete="name" placeholder="Dr. Jane Tan" [class.invalid]="invalid('full_name')" />
+        </div>
         @if (invalid('full_name')) { <span class="field-error">Enter your name (at least 2 characters).</span> }
       </div>
 
       <div class="field">
         <label for="email">Email</label>
-        <input id="email" class="input" type="email" formControlName="email" autocomplete="email" [class.invalid]="invalid('email')" />
+        <div class="with-icon">
+          <app-icon name="mail" [size]="17" />
+          <input id="email" class="input" type="email" formControlName="email" autocomplete="email" placeholder="you@hospital.org" [class.invalid]="invalid('email')" />
+        </div>
         @if (invalid('email')) { <span class="field-error">Enter a valid email address.</span> }
       </div>
 
       <div class="field">
         <label for="password">Password</label>
-        <input id="password" class="input" type="password" formControlName="password" autocomplete="new-password" [class.invalid]="invalid('password')" />
+        <div class="with-icon">
+          <app-icon name="lock" [size]="17" />
+          <input id="password" class="input" [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="new-password"
+                 placeholder="Create a password" [class.invalid]="invalid('password')" />
+          <button type="button" class="toggle" (click)="showPassword.set(!showPassword())"
+                  [attr.aria-label]="showPassword() ? 'Hide passwords' : 'Show passwords'" [attr.aria-pressed]="showPassword()">
+            <app-icon [name]="showPassword() ? 'eyeOff' : 'eye'" [size]="17" />
+          </button>
+        </div>
         @if (invalid('password')) {
           <span class="field-error">Use at least 8 characters, including a letter and a number.</span>
         } @else {
@@ -41,16 +51,21 @@
 
       <div class="field">
         <label for="confirm">Confirm password</label>
-        <input id="confirm" class="input" type="password" formControlName="confirm" autocomplete="new-password" [class.invalid]="invalid('confirm')" />
+        <div class="with-icon">
+          <app-icon name="lock" [size]="17" />
+          <input id="confirm" class="input" [type]="showPassword() ? 'text' : 'password'" formControlName="confirm" autocomplete="new-password"
+                 placeholder="Repeat the password" [class.invalid]="invalid('confirm')" />
+        </div>
         @if (invalid('confirm')) {
           <span class="field-error">{{ form.controls.confirm.value ? 'Passwords do not match.' : 'Confirm your password.' }}</span>
         }
       </div>
 
       <button class="btn btn-primary btn-block" type="submit" [disabled]="loading()">
-        @if (loading()) { <span class="spinner"></span> } Create account
+        @if (loading()) { <span class="spinner"></span> Creating account… } @else { Create account <app-icon name="arrowRight" [size]="17" /> }
       </button>
 
+      <div class="divider"></div>
       <p class="switch">Already have an account? <a routerLink="/login">Sign in</a></p>
     </form>
   </section>

@@ -47,7 +47,8 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
             except Exception as e:
                 logger.error(f"Error creating Grad-CAM model: {e}")
                 return None
-            last_conv_layer_output, preds = grad_model(img_array)
+            # training=False: otherwise BatchNorm updates its running statistics on every request
+            last_conv_layer_output, preds = grad_model(img_array, training=False)
 
         if isinstance(preds, list):
             preds = preds[0]
