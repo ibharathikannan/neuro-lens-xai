@@ -4,12 +4,12 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../service';
 import { DashboardSummary, TumorClass, classColor, classLabel } from '../../models';
-import { ClassChip } from '../../shared/chips';
+import { ClassChip, TypeChip } from '../../shared/chips';
 import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, ClassChip, PercentPipe, Icon],
+  imports: [RouterLink, ClassChip, PercentPipe, Icon, TypeChip],
   templateUrl: './dashboard.html',
   styles: `
     .kpis { grid-template-columns: repeat(4, 1fr); }

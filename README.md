@@ -19,6 +19,7 @@ NeuroLens classifies an MRI slice, shows **where the model looked** (Grad-CAM he
 | **Administrator password** | `Neurolens@2026` |
 | API documentation | https://neurolens-xai.azurewebsites.net/docs |
 | Health check | https://neurolens-xai.azurewebsites.net/api/health — shows `"model":"ready"` when the app is ready |
+| **Video presentation** | https://www.youtube.com/watch?v=DgXNyZJQaDQ |
 
 > The first request after the site has been idle can take a minute while the container starts and the model loads.
 
@@ -52,7 +53,8 @@ Download or clone this repository to get the test images in [`test_data/`](test_
 | **Web application** | https://neurolens-xai.azurewebsites.net · source in [`backend/`](backend) (FastAPI) and [`frontend/`](frontend) (Angular) | Classification with heatmaps, similar cases and comparison, multi-slice studies, reports, patient records and user accounts |
 | **Test data** | [`test_data/`](test_data) | Held-out single slices and patient-grouped slices for trying the app |
 | **Deployment** | [`Dockerfile`](Dockerfile), [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | One Docker image built, tested and deployed to Azure automatically |
-| **Automated tests** | [`backend/tests/`](backend/tests) | 24 API tests (accounts, patients, classification, similar cases, multi-slice), run before every deployment |
+| **Automated tests** | [`backend/tests/`](backend/tests) | 25 tests (accounts, patients, classification, similar cases, multi-slice, and a check that Grad-CAM never changes the model); the 24 that need no TensorFlow run before every deployment |
+| **Video presentation** | https://www.youtube.com/watch?v=DgXNyZJQaDQ | 12-minute walkthrough: live demo, then models, explanations, similar cases and findings |
 
 ## 4. How it runs in the cloud
 

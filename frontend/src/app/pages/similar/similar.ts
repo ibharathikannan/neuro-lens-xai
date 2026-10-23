@@ -4,12 +4,12 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../service';
 import { Scan, SimilarResult } from '../../models';
-import { ClassChip } from '../../shared/chips';
+import { ClassChip, TypeChip } from '../../shared/chips';
 import { MriImage } from '../../shared/mri-image';
 
 @Component({
   selector: 'app-similar',
-  imports: [RouterLink, PercentPipe, ClassChip, MriImage],
+  imports: [RouterLink, PercentPipe, ClassChip, MriImage, TypeChip],
   templateUrl: './similar.html',
   styles: `
     .layout { grid-template-columns: 300px 1fr; }

@@ -41,6 +41,7 @@
           </div>
         }
         <div class="kv small mt">
+          <div>Scan type</div><div><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" /></div>
           <div>Patient</div><div><a [routerLink]="['/patients', s.patient_id]">{{ s.patient_id }}</a></div>
           <div>Model</div><div>{{ s.model_version }}</div>
           <div>Inference time</div><div>{{ s.inference_seconds }} s</div>

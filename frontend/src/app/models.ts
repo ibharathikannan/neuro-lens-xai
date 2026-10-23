@@ -112,6 +112,8 @@ export interface SimilarCase {
   patient_id?: string | null;
   image_url?: string;
   gradcam_url?: string;
+  study_id?: string | null;   // set when the case is one slice of a multi-slice study
+  slice_index?: number | null;
   lesion?: Lesion;
 }
 
@@ -141,6 +143,8 @@ export interface Report {
   patient_id: string;
   scan_id: string;
   result: TumorClass;
+  study_id?: string | null;
+  slice_index?: number | null;
   created: string;
   blob_path: string;
   size: string;

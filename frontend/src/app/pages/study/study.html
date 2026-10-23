@@ -14,7 +14,7 @@
   <div class="grid layout">
     <div class="grid" style="align-content: start">
       <div class="card">
-        <h3>Combined result <span class="sub">{{ st.slice_count }} slices</span></h3>
+        <h3>Combined result <app-type-chip [studyId]="st.id" [count]="st.slice_count" /></h3>
         <div class="row" style="margin-bottom: 16px">
           <app-class-chip [value]="st.prediction" />
           <span class="big">{{ st.confidence | percent: '1.1-1' }}</span><span class="muted small">average confidence</span>

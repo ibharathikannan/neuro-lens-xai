@@ -3,12 +3,12 @@ import { PercentPipe } from '@angular/common';
 
 import { ApiService } from '../../service';
 import { classColor, classLabel, Comparison, TumorClass } from '../../models';
-import { ClassChip } from '../../shared/chips';
+import { ClassChip, TypeChip } from '../../shared/chips';
 import { MriImage } from '../../shared/mri-image';
 
 @Component({
   selector: 'app-compare',
-  imports: [PercentPipe, ClassChip, MriImage],
+  imports: [PercentPipe, ClassChip, MriImage, TypeChip],
   templateUrl: './compare.html',
   styles: `
     .top3 { grid-template-columns: 1fr 250px 1fr; }

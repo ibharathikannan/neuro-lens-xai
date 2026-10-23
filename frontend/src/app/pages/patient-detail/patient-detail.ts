@@ -4,13 +4,13 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../service';
 import { PatientDetail } from '../../models';
-import { ClassChip, StatusChip } from '../../shared/chips';
+import { ClassChip, StatusChip, TypeChip } from '../../shared/chips';
 import { MriImage } from '../../shared/mri-image';
 import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-patient-detail',
-  imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage, Icon],
+  imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage, Icon, TypeChip],
   templateUrl: './patient-detail.html',
   styles: `
     .layout { grid-template-columns: 320px 1fr; }

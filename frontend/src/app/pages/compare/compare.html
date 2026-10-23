@@ -12,6 +12,7 @@
         <app-mri-image [src]="d.query.gradcam_url" [lesion]="d.query.lesion" [heatmap]="true" [size]="180" alt="Query heatmap" />
       </div>
       <div class="mt"><app-class-chip [value]="d.query.prediction" /> <b>{{ d.query.confidence | percent: '1.1-1' }}</b> <span class="tag">predicted</span></div>
+      <div class="mt"><app-type-chip [studyId]="d.query.study_id" [slice]="d.query.slice_index" /></div>
     </div>
 
     <div class="card center" style="display: flex; flex-direction: column; justify-content: center">
@@ -34,6 +35,7 @@
         <app-mri-image [src]="d.reference.gradcam_url" [lesion]="d.reference.lesion" [heatmap]="true" [size]="180" alt="Reference heatmap" />
       </div>
       <div class="mt"><app-class-chip [value]="d.reference.label" /> <span class="tag">confirmed label · {{ d.reference.source_dataset }}</span></div>
+      <div class="mt"><app-type-chip [studyId]="d.reference.study_id" [slice]="d.reference.slice_index" /></div>
     </div>
   </div>
 

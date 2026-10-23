@@ -178,7 +178,7 @@ async def download_report(scan_id: str, user: dict = Depends(get_current_user)):
     gradcam = io.BytesIO(gradcam_data) if gradcam_data else None
     report = await run_in_threadpool(
         generate_docx_report, image, scan["prediction"], scan["probabilities"], scan["patient_id"], scan["id"],
-        scan.get("model_version", ""), gradcam)
+        scan.get("model_version", ""), gradcam, None, scan.get("study_id"), scan.get("slice_index"))
     headers = {"Content-Disposition": f'attachment; filename="NeuroLens_{scan["id"]}.docx"'}
     return StreamingResponse(report, headers=headers,
                              media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")

@@ -254,6 +254,34 @@ def test_study_rejects_bad_requests(client):
     assert client.get("/api/studies/ST-2026-9999").status_code == 404
 
 
+def test_scan_type_tells_single_slices_from_multi_slice_studies(client):
+    import docx
+
+    def report_text(path):
+        d = docx.Document(io.BytesIO(client.get(path).content))
+        return " ".join(c.text for t in d.tables for row in t.rows for c in row.cells)
+
+    client.post("/api/patients", json={"age": 52, "sex": "F"})
+    single = classify(client)
+    study = classify_study(client, [200, 198]).json()
+    client.post(f"/api/studies/{study['id']}/review")
+
+    # lists carry study_id / slice_index so the dashboard can label each scan
+    reports = {r["scan_id"]: r for r in client.get("/api/reports").json()}
+    assert reports[single["id"]]["study_id"] is None
+    first_slice = study["slices"][0]["id"]
+    assert reports[first_slice]["study_id"] == study["id"] and reports[first_slice]["slice_index"] == 1
+    recent = {s["id"]: s for s in client.get("/api/dashboard/summary").json()["recent"]}
+    assert recent[single["id"]]["study_id"] is None and recent[first_slice]["study_id"] == study["id"]
+    cases = client.get(f"/api/scans/{single['id']}/similar").json()["cases"]
+    assert cases and all(c["study_id"] == study["id"] for c in cases)       # only the study's slices are confirmed
+
+    # and so do the Word reports
+    assert "Single slice" in report_text(f"/api/scans/{single['id']}/report")
+    assert f"Slice 1 of multi-slice study {study['id']}" in report_text(f"/api/scans/{first_slice}/report")
+    assert "Multi-slice study · 2 slices" in report_text(f"/api/studies/{study['id']}/report")
+
+
 def test_combine_slices():
     from utils.studies import combine_slices
     slices = [{"prediction": "a", "probabilities": {"a": 0.9, "b": 0.1}},

@@ -13,6 +13,25 @@ export class ClassChip {
   protected readonly known = computed(() => this.value() in CLASS_LABELS);
 }
 
+/** Tells single-slice scans apart from multi-slice studies: "Single slice", "Multi-slice · slice 2" (one slice of a
+ *  study) or, with `count`, "Multi-slice · 5 slices" (the study itself). */
+@Component({
+  selector: 'app-type-chip',
+  template: `<span [class]="'chip ' + (multi() ? 'c-multi' : 'c-single')" [title]="title()">{{ label() }}</span>`,
+})
+export class TypeChip {
+  readonly studyId = input<string | null | undefined>(null);
+  readonly slice = input<number | null | undefined>(null);
+  readonly count = input<number | null | undefined>(null);
+  protected readonly multi = computed(() => !!this.studyId() || !!this.count());
+  protected readonly label = computed(() =>
+    this.count() ? `Multi-slice · ${this.count()} slices`
+      : this.studyId() ? `Multi-slice · slice ${this.slice() ?? '?'}` : 'Single slice');
+  protected readonly title = computed(() =>
+    this.count() ? `Multi-slice study of ${this.count()} slices from one scan`
+      : this.studyId() ? `Slice ${this.slice() ?? '?'} of multi-slice study ${this.studyId()}` : 'Single-slice scan');
+}
+
 /** Chip for a review status. */
 @Component({
   selector: 'app-status-chip',

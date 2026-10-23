@@ -94,6 +94,8 @@ def case_view(doc: dict, source: str, similarity: float, label: str) -> dict:
         "patient_id": doc.get("patient_id") if source == "patient" else None,
         "image_url": image_url(doc, "image"),
         "gradcam_url": image_url(doc, "gradcam"),
+        "study_id": doc.get("study_id"),          # set when the case is one slice of a multi-slice study
+        "slice_index": doc.get("slice_index"),
     }
 
 

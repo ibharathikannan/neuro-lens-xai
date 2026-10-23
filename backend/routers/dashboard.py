@@ -60,6 +60,8 @@ async def list_reports(user: dict = Depends(get_current_user)):
         "patient_id": s["patient_id"],
         "scan_id": s["id"],
         "result": s["prediction"],
+        "study_id": s.get("study_id"),
+        "slice_index": s.get("slice_index"),
         "created": fmt_date(s["created_at"], with_time=True),
         "blob_path": f"/api/scans/{s['id']}/report",
         "size": "DOCX",

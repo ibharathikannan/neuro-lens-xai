@@ -57,13 +57,14 @@ def _picture(doc, buffer, caption, width=3.2):
 
 
 def generate_docx_report(image_buffer, prediction, probabilities, patient_id, scan_id,
-                         model_version, gradcam_buffer=None, similar_cases=None):
+                         model_version, gradcam_buffer=None, similar_cases=None, study_id=None, slice_index=None):
     """
     Generates a template-based brain tumor MRI classification report (DOCX).
 
     prediction:     class key, e.g. "glioma"
     probabilities:  {"glioma": 0.93, "meningioma": 0.04, "notumor": 0.01, "pituitary": 0.02}
     similar_cases:  optional list of {"case_id", "label", "similarity"} (similarity 0-100)
+    study_id:       set when the scan is one slice of a multi-slice study (slice_index is its position)
     """
     logger.info(f"Generating report for scan {scan_id}: {prediction}")
     doc = Document()
@@ -90,12 +91,13 @@ def generate_docx_report(image_buffer, prediction, probabilities, patient_id, sc
     summary = _table(doc, [
         ("Patient", patient_id),
         ("Scan", scan_id),
+        ("Scan type", f"Slice {slice_index} of multi-slice study {study_id}" if study_id else "Single slice"),
         ("Predicted class", CLASS_LABELS.get(prediction, prediction)),
         ("Confidence", f"{confidence * 100:.1f}%"),
         ("Model", model_version),
     ])
-    summary.rows[2].cells[1].paragraphs[0].runs[0].font.bold = True
-    summary.rows[2].cells[1].paragraphs[0].runs[0].font.color.rgb = NAVY
+    summary.rows[3].cells[1].paragraphs[0].runs[0].font.bold = True
+    summary.rows[3].cells[1].paragraphs[0].runs[0].font.color.rgb = NAVY
     if confidence < 0.7:
         p = doc.add_paragraph()
         r = p.add_run("Low confidence (< 70%) — this result should be reviewed with particular care.")
@@ -180,7 +182,7 @@ def generate_study_report(study, slices):
     summary = _table(doc, [
         ("Patient", study["patient_id"]),
         ("Study", study["id"]),
-        ("Slices", str(len(slices))),
+        ("Scan type", f"Multi-slice study · {len(slices)} slices"),
         ("Combined prediction", CLASS_LABELS.get(study["prediction"], study["prediction"])),
         ("Average confidence", f"{study['confidence'] * 100:.1f}%"),
         ("Slices that agree", study["slice_agreement"]),
