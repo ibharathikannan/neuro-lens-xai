@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { PercentPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { ApiService } from '../../service';
 import { classColor, classLabel, Scan, Study, TumorClass } from '../../models';
@@ -10,12 +10,14 @@ import { Icon } from '../../shared/icon';
 
 const sorted = (p: Record<TumorClass, number>) => (Object.entries(p) as [TumorClass, number][]).sort((a, b) => b[1] - a[1]);
 
-/** Result of one scan. For a slice of a multi-slice study the page has two rows: (1) the overall result, averaged over
- *  every slice, with all slices shown together; (2) the selected slice with its own heatmap, explanation and prediction. */
+/** Result of one scan. For a slice of a multi-slice study the page has two rows: (1) a static overview of the overall
+ *  result, averaged over every slice, with all slices shown together; (2) one slice at a time, with a slider, showing
+ *  its own heatmap, explanation and prediction. */
 @Component({
   selector: 'app-result',
   imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage, Icon, TypeChip],
   templateUrl: './result.html',
+  host: { '(document:keydown)': 'onKey($event)' },
   styles: `
     .layout { grid-template-columns: 1.35fr 1fr; align-items: start; }
     .big { font-size: 26px; font-weight: 700; }
@@ -24,24 +26,27 @@ const sorted = (p: Record<TumorClass, number>) => (Object.entries(p) as [TumorCl
                      background: var(--navy); color: #fff; font-size: 13px; }
     .section .sub { font-weight: 400; font-size: 13px; color: var(--muted); }
     .overall { grid-template-columns: 1.7fr 1fr; gap: 28px; align-items: start; }
-    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; margin-top: 12px; }
-    .col { display: block; color: inherit; text-decoration: none; border-radius: 10px; padding: 6px;
-           box-shadow: inset 0 0 0 1px var(--line); text-align: center; }
-    .col:hover { box-shadow: inset 0 0 0 1px var(--navy); }
-    .col.current { box-shadow: 0 0 0 2px var(--navy); }
-    .col.off { background: #fffaf3; }
+    .gallery { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-top: 12px; }
+    .col { flex: 1 1 90px; max-width: 120px; border-radius: 10px; padding: 6px; box-shadow: inset 0 0 0 1px var(--line); text-align: center; }
+    .col.off { background: #fffaf3; box-shadow: inset 0 0 0 1px #f0c9a0; }
     .col img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #000; margin-top: 6px; }
     .col .small { line-height: 1.35; }
+    .slider { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px; }
+    .nav { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--navy); color: #fff;
+           font-size: 24px; line-height: 1; cursor: pointer; }
+    .nav:disabled { background: var(--line); color: var(--muted); cursor: default; }
+    .film { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .film a { position: relative; display: block; border-radius: 8px; padding: 3px; box-shadow: inset 0 0 0 1px var(--line-strong); }
+    .film a.current { box-shadow: 0 0 0 2px var(--navy); }
+    .film img { display: block; width: 54px; height: 54px; object-fit: cover; border-radius: 5px; background: #000; }
+    .film span { position: absolute; left: 6px; bottom: 5px; font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 0 3px #000; }
     .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
-    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
-    .tabs a { padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; text-decoration: none;
-              color: var(--navy); box-shadow: inset 0 0 0 1px var(--line-strong); background: #fff; }
-    .tabs a.current { background: var(--navy); color: #fff; box-shadow: none; }
     @media (max-width: 1100px) { .layout, .overall { grid-template-columns: 1fr; } }
   `,
 })
 export class Result {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   readonly id = input.required<string>();
 
   protected readonly scan = signal<Scan | null>(null);
@@ -67,6 +72,22 @@ export class Result {
     const st = this.study();
     return st ? st.slices.map((x) => x.probabilities[st.prediction] ?? 0) : [];
   });
+
+  /** Neighbouring slices for the slider in row 2 (null at either end). */
+  private readonly position = computed(() => this.study()?.slices.findIndex((x) => x.id === this.scan()?.id) ?? -1);
+  protected readonly prevId = computed(() => this.study()?.slices[this.position() - 1]?.id ?? null);
+  protected readonly nextId = computed(() => this.study()?.slices[this.position() + 1]?.id ?? null);
+
+  protected go(id: string | null): void {
+    if (id) this.router.navigate(['/scans', id]);
+  }
+
+  protected onKey(e: KeyboardEvent): void {
+    const target = e.target as HTMLElement | null;
+    if (!this.study() || target?.closest('input, textarea, select')) return;
+    if (e.key === 'ArrowLeft') this.go(this.prevId());
+    if (e.key === 'ArrowRight') this.go(this.nextId());
+  }
 
   /** True when every slice predicts the combined class. */
   protected readonly allAgree = computed(() => {
