@@ -126,7 +126,7 @@ python app.py                                                   # dashboard + AP
 
 ```bash
 cd backend
-pytest -q          # 25 tests — in-memory database and a fake model (the Grad-CAM test needs TensorFlow and is skipped without it)
+pytest -q          # 26 tests — in-memory database and a fake model (the Grad-CAM test needs TensorFlow and is skipped without it)
 ```
 
 ### Troubleshooting
