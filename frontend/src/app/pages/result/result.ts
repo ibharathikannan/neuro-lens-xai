@@ -10,27 +10,34 @@ import { Icon } from '../../shared/icon';
 
 const sorted = (p: Record<TumorClass, number>) => (Object.entries(p) as [TumorClass, number][]).sort((a, b) => b[1] - a[1]);
 
-/** Result of one scan. For a slice of a multi-slice study the same page also shows the combined result and a strip of
- *  every slice; picking a slice swaps the heatmap and prediction below it. */
+/** Result of one scan. For a slice of a multi-slice study the page has two rows: (1) the overall result, averaged over
+ *  every slice, with all slices shown together; (2) the selected slice with its own heatmap, explanation and prediction. */
 @Component({
   selector: 'app-result',
   imports: [RouterLink, PercentPipe, ClassChip, StatusChip, MriImage, Icon, TypeChip],
   templateUrl: './result.html',
   styles: `
     .layout { grid-template-columns: 1.35fr 1fr; align-items: start; }
-    .combo { grid-template-columns: minmax(280px, 1fr) 1.6fr; gap: 28px; align-items: start; margin-top: 14px; }
     .big { font-size: 26px; font-weight: 700; }
-    .strip { display: flex; gap: 10px; flex-wrap: wrap; padding: 2px; }
-    .thumb { flex: none; display: block; text-align: center; color: inherit; text-decoration: none; border-radius: 10px;
-             padding: 5px; box-shadow: inset 0 0 0 1px var(--line-strong); }
-    .thumb:hover { box-shadow: inset 0 0 0 1px var(--navy); }
-    .thumb.current { box-shadow: 0 0 0 2px var(--navy); }
-    .thumb.off { background: #fffaf3; box-shadow: inset 0 0 0 1px #f0c9a0; }
-    .thumb.off.current { box-shadow: 0 0 0 2px var(--navy); }
-    .thumb img { display: block; width: 96px; height: 96px; object-fit: cover; border-radius: 7px; background: #000; }
-    .thumb .small { margin-top: 4px; line-height: 1.3; }
+    .section { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 6px 0 12px; font-size: 17px; font-weight: 700; }
+    .section .step { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+                     background: var(--navy); color: #fff; font-size: 13px; }
+    .section .sub { font-weight: 400; font-size: 13px; color: var(--muted); }
+    .overall { grid-template-columns: 1.7fr 1fr; gap: 28px; align-items: start; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; margin-top: 12px; }
+    .col { display: block; color: inherit; text-decoration: none; border-radius: 10px; padding: 6px;
+           box-shadow: inset 0 0 0 1px var(--line); text-align: center; }
+    .col:hover { box-shadow: inset 0 0 0 1px var(--navy); }
+    .col.current { box-shadow: 0 0 0 2px var(--navy); }
+    .col.off { background: #fffaf3; }
+    .col img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #000; margin-top: 6px; }
+    .col .small { line-height: 1.35; }
     .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
-    @media (max-width: 1100px) { .layout, .combo { grid-template-columns: 1fr; } }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+    .tabs a { padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; text-decoration: none;
+              color: var(--navy); box-shadow: inset 0 0 0 1px var(--line-strong); background: #fff; }
+    .tabs a.current { background: var(--navy); color: #fff; box-shadow: none; }
+    @media (max-width: 1100px) { .layout, .overall { grid-template-columns: 1fr; } }
   `,
 })
 export class Result {
@@ -53,6 +60,12 @@ export class Result {
   protected readonly studyProbabilities = computed(() => {
     const st = this.study();
     return st ? sorted(st.probabilities) : [];
+  });
+
+  /** Each slice's score for the overall class: the overall score is their average. */
+  protected readonly sliceScores = computed(() => {
+    const st = this.study();
+    return st ? st.slices.map((x) => x.probabilities[st.prediction] ?? 0) : [];
   });
 
   /** True when every slice predicts the combined class. */

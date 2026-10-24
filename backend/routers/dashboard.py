@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from fastapi.concurrency import run_in_threadpool
 
 from utils.config import CLASS_NAMES, CLASS_LABELS, COMPARISON_CSV, IMG_SIZE
-from utils.database import get_patients_collection, get_scans_collection, now_utc, ping
+from utils.database import get_patients_collection, get_scans_collection, get_studies_collection, now_utc, ping
 from utils import blob_storage, similarity
 from utils.model_service import MODEL_INFO, MODEL_DISPLAY_NAME, embedding_key
 from utils.security import get_current_user
@@ -44,7 +44,7 @@ async def dashboard_summary(user: dict = Depends(get_current_user)):
         "patients_this_month": patients_col.count_documents({"created_at": {"$gte": month_start}}),
         "scans": total,
         "scans_this_month": sum(1 for s in scans if aware(s["created_at"]) >= month_start),
-        "reports": total,
+        "reports": len(report_rows(scans)),
         "avg_inference_seconds": round(sum(s.get("inference_seconds", 0) for s in scans) / total, 2) if total else 0,
         "weekly": weekly,
         "distribution": distribution,
@@ -53,23 +53,56 @@ async def dashboard_summary(user: dict = Depends(get_current_user)):
     }
 
 
+def report_rows(scans: list[dict]) -> list[dict]:
+    """One report per single-slice scan and one combined report per multi-slice study (newest first).
+    A study's row links to its first slice, whose result page shows the whole study."""
+    studies = {st["id"]: st for st in get_studies_collection().find(
+        {"id": {"$in": list({s["study_id"] for s in scans if s.get("study_id")})}}, {"id": 1, "prediction": 1, "slice_count": 1})}
+    first_slice = {}
+    for s in scans:
+        sid = s.get("study_id")
+        if sid and (sid not in first_slice or s.get("slice_index", 0) < first_slice[sid].get("slice_index", 0)):
+            first_slice[sid] = s
+    rows, seen = [], set()
+    for s in scans:
+        sid = s.get("study_id")
+        if sid in seen:
+            continue
+        if sid:
+            seen.add(sid)
+            st = studies.get(sid, {})
+            rows.append({
+                "id": "R-" + sid,
+                "patient_id": s["patient_id"],
+                "scan_id": first_slice[sid]["id"],
+                "result": st.get("prediction", s["prediction"]),
+                "study_id": sid,
+                "slice_index": None,
+                "slice_count": st.get("slice_count"),
+                "created": fmt_date(s["created_at"], with_time=True),
+                "blob_path": f"/api/studies/{sid}/report",
+                "size": "DOCX",
+            })
+        else:
+            rows.append({
+                "id": "R-" + s["id"].split("-")[-1],
+                "patient_id": s["patient_id"],
+                "scan_id": s["id"],
+                "result": s["prediction"],
+                "study_id": None,
+                "slice_index": None,
+                "slice_count": None,
+                "created": fmt_date(s["created_at"], with_time=True),
+                "blob_path": f"/api/scans/{s['id']}/report",
+                "size": "DOCX",
+            })
+    return rows
+
+
 @router.get("/reports")
 async def list_reports(user: dict = Depends(get_current_user)):
-    """One report per scan — generated on demand by GET /api/scans/{id}/report."""
-    scans = list(get_scans_collection().find({}, NO_IMAGES).sort("created_at", -1))
-    sizes = study_sizes(scans)
-    return [{
-        "id": "R-" + s["id"].split("-")[-1],
-        "patient_id": s["patient_id"],
-        "scan_id": s["id"],
-        "result": s["prediction"],
-        "study_id": s.get("study_id"),
-        "slice_index": s.get("slice_index"),
-        "slice_count": sizes.get(s.get("study_id")),
-        "created": fmt_date(s["created_at"], with_time=True),
-        "blob_path": f"/api/scans/{s['id']}/report",
-        "size": "DOCX",
-    } for s in scans]
+    """Reports are generated on demand: GET /api/scans/{id}/report or, for a multi-slice study, /api/studies/{id}/report."""
+    return report_rows(list(get_scans_collection().find({}, NO_IMAGES).sort("created_at", -1)))
 
 
 def load_comparison() -> list[dict]:

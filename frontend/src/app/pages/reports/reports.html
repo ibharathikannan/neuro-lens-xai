@@ -22,14 +22,14 @@
       <button class="btn btn-outline" type="button" (click)="exportCsv()"><app-icon name="download" [size]="16" /> Export list (CSV)</button>
     </div>
     <table>
-      <thead><tr><th>Report</th><th>Patient</th><th>Scan</th><th>Type</th><th>Result</th><th>Created</th><th>Blob path</th><th>Size</th><th></th></tr></thead>
+      <thead><tr><th>Report</th><th>Patient</th><th>Scan / study</th><th>Type</th><th>Result</th><th>Created</th><th>Blob path</th><th>Size</th><th></th></tr></thead>
       <tbody>
         @for (r of filtered(); track r.id) {
           <tr>
-            <td><b>{{ r.id }}</b></td>
+            <td style="white-space: nowrap"><b>{{ r.id }}</b></td>
             <td><a [routerLink]="['/patients', r.patient_id]">{{ r.patient_id }}</a></td>
-            <td><a [routerLink]="['/scans', r.scan_id]">{{ r.scan_id }}</a></td>
-            <td><app-type-chip [studyId]="r.study_id" [slice]="r.slice_index" [total]="r.slice_count" /></td>
+            <td><a [routerLink]="['/scans', r.scan_id]">{{ r.study_id || r.scan_id }}</a></td>
+            <td><app-type-chip [studyId]="r.study_id" [count]="r.slice_count" /></td>
             <td><app-class-chip [value]="r.result" /></td>
             <td class="muted">{{ r.created }}</td>
             <td class="mono">{{ r.blob_path }}</td>

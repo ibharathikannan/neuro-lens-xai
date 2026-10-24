@@ -6,22 +6,35 @@
 } @else if (scan()) {
   @let s = scan()!;
   @if (study(); as st) {
+    <!-- Row 1: the overall result of the whole study -->
+    <div class="section"><span class="step">1</span> Overall result <span class="sub">study {{ st.id }} · all {{ st.slice_count }} slices combined</span></div>
     @if (!allAgree()) {
       <div class="alert alert-error">
         <b>The slices disagree</b> ({{ st.slice_agreement }} predict {{ label(st.prediction) }}). This study is flagged for careful review.
       </div>
     }
-    <div class="card" style="margin-bottom: 18px">
-      <div class="row between wrap">
-        <h3 style="margin: 0">Multi-slice study {{ st.id }} <app-type-chip [studyId]="st.id" [count]="st.slice_count" /></h3>
-        <span class="small muted">each slice is classified separately by the same 2D model; the probabilities are averaged</span>
-      </div>
-      <div class="grid combo">
+    <div class="card" style="margin-bottom: 26px">
+      <div class="grid overall">
         <div>
-          <div class="tag" style="margin-bottom: 8px">Combined result</div>
+          <h3 style="margin: 0">All {{ st.slice_count }} slices <span class="sub">scan (top) and heatmap (bottom) of each slice · select one to see it in row 2</span></h3>
+          <div class="gallery">
+            @for (sl of st.slices; track sl.id) {
+              <a class="col" [class.current]="sl.id === s.id" [class.off]="sl.prediction !== st.prediction" [routerLink]="['/scans', sl.id]"
+                 [title]="'Slice ' + sl.slice_index + ' · ' + sl.id">
+                <div class="small"><b>Slice {{ sl.slice_index }}</b></div>
+                <img [src]="sl.image_url" [alt]="'Slice ' + sl.slice_index" />
+                <img [src]="sl.gradcam_url || sl.image_url" [alt]="'Heatmap of slice ' + sl.slice_index" />
+                <div class="small" style="margin-top: 6px"><span class="dot" [style.background]="color(sl.prediction, 0)"></span>{{ label(sl.prediction) }}</div>
+                <div class="small muted">{{ sl.confidence | percent: '1.1-1' }}</div>
+              </a>
+            }
+          </div>
+        </div>
+        <div>
+          <h3 style="margin: 0 0 12px">Overall prediction <app-type-chip [studyId]="st.id" [count]="st.slice_count" /></h3>
           <div class="row" style="margin-bottom: 14px">
             <app-class-chip [value]="st.prediction" />
-            <span class="big">{{ st.confidence | percent: '1.1-1' }}</span><span class="muted small">average confidence</span>
+            <span class="big">{{ st.confidence | percent: '1.1-1' }}</span><span class="muted small">average of {{ st.slice_count }} slices</span>
           </div>
           @for (p of studyProbabilities(); track p[0]) {
             <div style="margin-bottom: 10px">
@@ -29,6 +42,13 @@
               <div class="bar"><span [style.width.%]="p[1] * 100" [style.background]="color(p[0], $index)"></span></div>
             </div>
           }
+          <div class="note small mt">
+            <b>How the overall score is calculated.</b> Each of the {{ st.slice_count }} slices is classified separately by the same
+            2D model. The overall score of each class is the <b>average of the {{ st.slice_count }} individual slice scores</b>, and the
+            class with the highest average is the overall result:<br />
+            {{ label(st.prediction) }} = (@for (v of sliceScores(); track $index) {<span>{{ v | percent: '1.1-1' }}</span>@if (!$last) {<span> + </span>}}) ÷ {{ st.slice_count }}
+            = <b>{{ st.confidence | percent: '1.1-1' }}</b>
+          </div>
           <div class="kv small mt">
             <div>Slices that agree</div><div><b>{{ st.slice_agreement }}</b></div>
             <div>Sequence</div><div>{{ st.sequence || '—' }}</div>
@@ -41,21 +61,17 @@
             }
           </div>
         </div>
-        <div>
-          <div class="tag" style="margin-bottom: 8px">Slices · select one to see its heatmap and prediction below</div>
-          <div class="strip">
-            @for (sl of st.slices; track sl.id) {
-              <a class="thumb" [class.current]="sl.id === s.id" [class.off]="sl.prediction !== st.prediction" [routerLink]="['/scans', sl.id]"
-                 [title]="'Slice ' + sl.slice_index + ' · ' + sl.id + ' · ' + label(sl.prediction)">
-                <img [src]="sl.gradcam_url || sl.image_url" [alt]="'Slice ' + sl.slice_index" />
-                <div class="small"><b>Slice {{ sl.slice_index }}</b></div>
-                <div class="small muted"><span class="dot" [style.background]="color(sl.prediction, 0)"></span>{{ sl.confidence | percent: '1.0-0' }}</div>
-              </a>
-            }
-          </div>
-          <div class="note small mt">{{ st.explanation }}</div>
-        </div>
       </div>
+    </div>
+
+    <!-- Row 2: one slice on its own -->
+    <div class="section">
+      <span class="step">2</span> Individual slice <span class="sub">slice {{ s.slice_index }} of {{ st.slice_count }} · its own prediction and explanation</span>
+      <span class="tabs">
+        @for (sl of st.slices; track sl.id) {
+          <a [class.current]="sl.id === s.id" [routerLink]="['/scans', sl.id]">Slice {{ sl.slice_index }}</a>
+        }
+      </span>
     </div>
   }
 

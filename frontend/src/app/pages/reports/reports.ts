@@ -28,7 +28,7 @@ export class Reports {
     const cls = this.classFilter();
     return (this.reports() ?? []).filter((r) =>
       (!cls || r.result === cls) &&
-      (!term || [r.id, r.patient_id, r.scan_id].some((v) => v.toLowerCase().includes(term))));
+      (!term || [r.id, r.patient_id, r.scan_id, r.study_id ?? ''].some((v) => v.toLowerCase().includes(term))));
   });
 
   constructor() {
@@ -39,15 +39,16 @@ export class Reports {
   }
 
   protected download(report: Report): void {
-    this.api.downloadReport(report.scan_id).subscribe({
+    const download = report.study_id ? this.api.downloadStudyReport(report.study_id) : this.api.downloadReport(report.scan_id);
+    download.subscribe({
       next: (done) => { if (!done) this.info.set('Demo data mode: reports can be downloaded when connected to the backend.'); },
       error: (e: Error) => this.error.set(e.message),
     });
   }
 
   protected exportCsv(): void {
-    const header = 'report,patient,scan,result,created,blob_path,size';
-    const rows = this.filtered().map((r) => [r.id, r.patient_id, r.scan_id, r.result, r.created, r.blob_path, r.size].join(','));
+    const header = 'report,patient,scan,study,slices,result,created,blob_path,size';
+    const rows = this.filtered().map((r) => [r.id, r.patient_id, r.scan_id, r.study_id ?? '', r.slice_count ?? 1, r.result, r.created, r.blob_path, r.size].join(','));
     const url = URL.createObjectURL(new Blob([[header, ...rows].join('\n')], { type: 'text/csv' }));
     const a = Object.assign(document.createElement('a'), { href: url, download: 'neurolens_reports.csv' });
     a.click();
