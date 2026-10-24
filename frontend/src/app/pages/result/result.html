@@ -5,33 +5,70 @@
   <div class="state"><span class="spinner"></span></div>
 } @else if (scan()) {
   @let s = scan()!;
-  @if (s.study_id) {
+  @if (study(); as st) {
+    @if (!allAgree()) {
+      <div class="alert alert-error">
+        <b>The slices disagree</b> ({{ st.slice_agreement }} predict {{ label(st.prediction) }}). This study is flagged for careful review.
+      </div>
+    }
     <div class="card" style="margin-bottom: 18px">
       <div class="row between wrap">
-        <div>This scan is <b>slice {{ s.slice_index }}{{ s.slice_count ? ' of ' + s.slice_count : '' }}</b> of multi-slice study
-          <a [routerLink]="['/studies', s.study_id]"><b>{{ s.study_id }}</b></a>. Each slice is classified on its own.</div>
-        <a class="btn btn-outline btn-sm" [routerLink]="['/studies', s.study_id]">View the combined result →</a>
+        <h3 style="margin: 0">Multi-slice study {{ st.id }} <app-type-chip [studyId]="st.id" [count]="st.slice_count" /></h3>
+        <span class="small muted">each slice is classified separately by the same 2D model; the probabilities are averaged</span>
       </div>
-      @if (study(); as st) {
-        <div class="strip">
-          @for (sl of st.slices; track sl.id) {
-            <a class="thumb" [class.current]="sl.id === s.id" [routerLink]="['/scans', sl.id]"
-               [title]="'Slice ' + sl.slice_index + ' · ' + sl.id + ' · ' + label(sl.prediction)">
-              <img [src]="sl.gradcam_url || sl.image_url" [alt]="'Slice ' + sl.slice_index" />
-              <div class="tag" style="margin-top: 4px">Slice {{ sl.slice_index }}</div>
-            </a>
+      <div class="grid combo">
+        <div>
+          <div class="tag" style="margin-bottom: 8px">Combined result</div>
+          <div class="row" style="margin-bottom: 14px">
+            <app-class-chip [value]="st.prediction" />
+            <span class="big">{{ st.confidence | percent: '1.1-1' }}</span><span class="muted small">average confidence</span>
+          </div>
+          @for (p of studyProbabilities(); track p[0]) {
+            <div style="margin-bottom: 10px">
+              <div class="row between small"><span>{{ label(p[0]) }}</span><b>{{ p[1] | percent: '1.1-1' }}</b></div>
+              <div class="bar"><span [style.width.%]="p[1] * 100" [style.background]="color(p[0], $index)"></span></div>
+            </div>
           }
+          <div class="kv small mt">
+            <div>Slices that agree</div><div><b>{{ st.slice_agreement }}</b></div>
+            <div>Sequence</div><div>{{ st.sequence || '—' }}</div>
+            <div>Status</div><div><app-status-chip [value]="st.status" /></div>
+          </div>
+          <div class="row wrap mt" style="gap: 10px">
+            <button class="btn btn-primary btn-sm" type="button" (click)="downloadStudy()"><app-icon name="download" [size]="16" /> Download study report</button>
+            @if (st.status !== 'Reviewed') {
+              <button class="btn btn-light btn-sm" type="button" (click)="markStudyReviewed()" [disabled]="busy()"><app-icon name="check" [size]="16" /> Mark study reviewed</button>
+            }
+          </div>
         </div>
-      }
+        <div>
+          <div class="tag" style="margin-bottom: 8px">Slices · select one to see its heatmap and prediction below</div>
+          <div class="strip">
+            @for (sl of st.slices; track sl.id) {
+              <a class="thumb" [class.current]="sl.id === s.id" [class.off]="sl.prediction !== st.prediction" [routerLink]="['/scans', sl.id]"
+                 [title]="'Slice ' + sl.slice_index + ' · ' + sl.id + ' · ' + label(sl.prediction)">
+                <img [src]="sl.gradcam_url || sl.image_url" [alt]="'Slice ' + sl.slice_index" />
+                <div class="small"><b>Slice {{ sl.slice_index }}</b></div>
+                <div class="small muted"><span class="dot" [style.background]="color(sl.prediction, 0)"></span>{{ sl.confidence | percent: '1.0-0' }}</div>
+              </a>
+            }
+          </div>
+          <div class="note small mt">{{ st.explanation }}</div>
+        </div>
+      </div>
     </div>
   }
+
   <div class="grid layout">
     <div class="card">
-      <div class="row between"><h3 style="margin: 0">Model explanation</h3><span class="small muted">heatmap · last convolutional block</span></div>
+      <div class="row between">
+        <h3 style="margin: 0">{{ s.study_id ? 'Slice ' + s.slice_index + ' · model explanation' : 'Model explanation' }}</h3>
+        <span class="small muted">heatmap · last convolutional block</span>
+      </div>
       <div class="row wrap" style="gap: 18px; margin-top: 14px">
         <div>
           <app-mri-image [src]="s.image_url" [lesion]="s.lesion" [size]="250" alt="Uploaded scan" />
-          <div class="tag" style="margin-top: 6px; text-align: center">Uploaded scan</div>
+          <div class="tag" style="margin-top: 6px; text-align: center">{{ s.study_id ? 'Slice ' + s.slice_index : 'Uploaded scan' }}</div>
         </div>
         <div>
           <app-mri-image [src]="s.gradcam_url" [lesion]="s.lesion" [heatmap]="true" [size]="250" alt="Heatmap of regions that drove the prediction" />
@@ -43,7 +80,7 @@
 
     <div class="grid" style="align-content: start">
       <div class="card">
-        <h3>Prediction</h3>
+        <h3>{{ s.study_id ? 'Slice ' + s.slice_index + ' prediction' : 'Prediction' }}</h3>
         <div class="row" style="margin-bottom: 16px">
           <app-class-chip [value]="s.prediction" />
           <span class="big">{{ s.confidence | percent: '1.1-1' }}</span><span class="muted small">confidence</span>
@@ -55,11 +92,8 @@
           </div>
         }
         <div class="kv small mt">
-          <div>Scan type</div><div>
-            @if (s.study_id) {
-              <a [routerLink]="['/studies', s.study_id]" title="View the combined result"><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" /></a>
-            } @else { <app-type-chip /> }
-          </div>
+          <div>Scan type</div><div><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" /></div>
+          <div>Scan ID</div><div>{{ s.id }}</div>
           <div>Patient</div><div><a [routerLink]="['/patients', s.patient_id]">{{ s.patient_id }}</a></div>
           <div>Model</div><div>{{ s.model_version }}</div>
           <div>Inference time</div><div>{{ s.inference_seconds }} s</div>
@@ -69,15 +103,16 @@
       </div>
 
       <div class="card">
-        <h3>Report</h3>
+        <h3>{{ s.study_id ? 'Slice report' : 'Report' }}</h3>
         <div class="row wrap" style="margin-bottom: 10px">
           <span class="chip c-ok">Result saved</span><span class="chip c-info">Word report · generated on download</span>
         </div>
         @if (s.report_path) { <div class="mono" style="margin-bottom: 14px">{{ s.report_path }}</div> }
         <div class="row wrap" style="gap: 10px">
-          <button class="btn btn-primary btn-sm" type="button" (click)="download()"><app-icon name="download" [size]="16" /> Download report</button>
+          <button class="btn btn-primary btn-sm" type="button" (click)="download()"><app-icon name="download" [size]="16" /> {{ s.study_id ? 'Download slice report' : 'Download report' }}</button>
           <a class="btn btn-outline btn-sm" [routerLink]="['/scans', s.id, 'similar']"><app-icon name="similar" [size]="16" /> Find similar cases</a>
-          @if (s.status !== 'Reviewed') {
+          <!-- slices of a study are reviewed together, with "Mark study reviewed" above -->
+          @if (s.status !== 'Reviewed' && !s.study_id) {
             <button class="btn btn-light btn-sm" type="button" (click)="markReviewed()" [disabled]="busy()"><app-icon name="check" [size]="16" /> Mark reviewed</button>
           }
         </div>

@@ -22,7 +22,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/new-scan/new-scan').then((m) => m.NewScan) },
       { path: 'scans/:id', data: { title: 'Classification Result', crumb: 'Scans › Result' },
         loadComponent: () => import('./pages/result/result').then((m) => m.Result) },
-      { path: 'studies/:id', data: { title: 'Multi-slice Result', crumb: 'Scans › Multi-slice result' },
+      { path: 'studies/:id', data: { title: 'Classification Result', crumb: 'Scans › Result' },
         loadComponent: () => import('./pages/study/study').then((m) => m.StudyPage) },
       { path: 'scans/:id/similar', data: { title: 'Similar Cases', crumb: 'Scans › Similar cases' },
         loadComponent: () => import('./pages/similar/similar').then((m) => m.Similar) },

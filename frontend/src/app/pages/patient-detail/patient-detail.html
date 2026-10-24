@@ -49,7 +49,7 @@
                     <app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" />
                   </div>
                   <div class="row small">
-                    @if (s.study_id) { <a [routerLink]="['/studies', s.study_id]">Study {{ s.study_id }} · slice {{ s.slice_index }}</a> }
+                    @if (s.study_id) { <a [routerLink]="['/scans', s.id]">Study {{ s.study_id }} · slice {{ s.slice_index }}</a> }
                     <a [routerLink]="['/scans', s.id]">View result</a>
                     <a [routerLink]="['/scans', s.id, 'similar']">Similar cases</a>
                   </div>

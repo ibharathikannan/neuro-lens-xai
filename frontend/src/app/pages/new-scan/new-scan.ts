@@ -134,7 +134,7 @@ export class NewScan implements OnInit {
       });
     } else {
       this.api.classifyStudy({ ...details, files }).subscribe({
-        next: (study) => this.router.navigate(['/studies', study.id]),
+        next: (study) => this.router.navigate(['/scans', study.slices[0].id]),
         error: fail,
       });
     }
