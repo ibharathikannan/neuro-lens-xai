@@ -13,7 +13,7 @@ from utils.logger import logger
 from utils.model_service import classify, embedding_key, model_version
 from utils.report_generator import generate_docx_report
 from utils.security import get_current_user
-from utils.views import case_view, explanation_for, scan_view
+from utils.views import case_view, explanation_for, scan_view, study_sizes
 
 # Create Router
 router = APIRouter(prefix="/api/scans", tags=["Scans"])
@@ -178,7 +178,8 @@ async def download_report(scan_id: str, user: dict = Depends(get_current_user)):
     gradcam = io.BytesIO(gradcam_data) if gradcam_data else None
     report = await run_in_threadpool(
         generate_docx_report, image, scan["prediction"], scan["probabilities"], scan["patient_id"], scan["id"],
-        scan.get("model_version", ""), gradcam, None, scan.get("study_id"), scan.get("slice_index"))
+        scan.get("model_version", ""), gradcam, None, scan.get("study_id"), scan.get("slice_index"),
+        study_sizes([scan]).get(scan.get("study_id")))
     headers = {"Content-Disposition": f'attachment; filename="NeuroLens_{scan["id"]}.docx"'}
     return StreamingResponse(report, headers=headers,
                              media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
@@ -191,7 +192,8 @@ async def similar_cases(scan_id: str, k: int = SIMILAR_K, user: dict = Depends(g
     scan = await run_in_threadpool(_with_embedding, _get_scan(scan_id))
     hits, method = await run_in_threadpool(_search, scan, k)
     n_reference, n_patient = await run_in_threadpool(similarity.search_space, embedding_key())
-    cases = [case_view(h["doc"], h["source"], h["similarity"], similarity.case_label(h["doc"], h["source"])) for h in hits]
+    sizes = study_sizes([h["doc"] for h in hits])
+    cases = [case_view(h["doc"], h["source"], h["similarity"], similarity.case_label(h["doc"], h["source"]), sizes) for h in hits]
     return {
         "query": scan_view(scan),
         "search_space": f"{n_reference:,} reference cases + {n_patient:,} reviewed patient scans",

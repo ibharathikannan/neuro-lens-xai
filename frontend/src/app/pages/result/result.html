@@ -6,9 +6,23 @@
 } @else if (scan()) {
   @let s = scan()!;
   @if (s.study_id) {
-    <div class="alert alert-info">
-      This is slice {{ s.slice_index }} of multi-slice study <b>{{ s.study_id }}</b>.
-      <a [routerLink]="['/studies', s.study_id]">View the combined result →</a>
+    <div class="card" style="margin-bottom: 18px">
+      <div class="row between wrap">
+        <div>This scan is <b>slice {{ s.slice_index }}{{ s.slice_count ? ' of ' + s.slice_count : '' }}</b> of multi-slice study
+          <a [routerLink]="['/studies', s.study_id]"><b>{{ s.study_id }}</b></a>. Each slice is classified on its own.</div>
+        <a class="btn btn-outline btn-sm" [routerLink]="['/studies', s.study_id]">View the combined result →</a>
+      </div>
+      @if (study(); as st) {
+        <div class="strip">
+          @for (sl of st.slices; track sl.id) {
+            <a class="thumb" [class.current]="sl.id === s.id" [routerLink]="['/scans', sl.id]"
+               [title]="'Slice ' + sl.slice_index + ' · ' + sl.id + ' · ' + label(sl.prediction)">
+              <img [src]="sl.gradcam_url || sl.image_url" [alt]="'Slice ' + sl.slice_index" />
+              <div class="tag" style="margin-top: 4px">Slice {{ sl.slice_index }}</div>
+            </a>
+          }
+        </div>
+      }
     </div>
   }
   <div class="grid layout">
@@ -41,7 +55,11 @@
           </div>
         }
         <div class="kv small mt">
-          <div>Scan type</div><div><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" /></div>
+          <div>Scan type</div><div>
+            @if (s.study_id) {
+              <a [routerLink]="['/studies', s.study_id]" title="View the combined result"><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" /></a>
+            } @else { <app-type-chip /> }
+          </div>
           <div>Patient</div><div><a [routerLink]="['/patients', s.patient_id]">{{ s.patient_id }}</a></div>
           <div>Model</div><div>{{ s.model_version }}</div>
           <div>Inference time</div><div>{{ s.inference_seconds }} s</div>

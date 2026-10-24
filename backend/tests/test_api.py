@@ -266,19 +266,22 @@ def test_scan_type_tells_single_slices_from_multi_slice_studies(client):
     study = classify_study(client, [200, 198]).json()
     client.post(f"/api/studies/{study['id']}/review")
 
-    # lists carry study_id / slice_index so the dashboard can label each scan
+    # lists carry study_id / slice_index / slice_count so the dashboard can label each scan "Slice 1 of 2 · ST-…"
     reports = {r["scan_id"]: r for r in client.get("/api/reports").json()}
     assert reports[single["id"]]["study_id"] is None
     first_slice = study["slices"][0]["id"]
     assert reports[first_slice]["study_id"] == study["id"] and reports[first_slice]["slice_index"] == 1
+    assert reports[first_slice]["slice_count"] == 2 and reports[single["id"]]["slice_count"] is None
+    assert client.get(f"/api/scans/{first_slice}").json()["slice_count"] == 2
     recent = {s["id"]: s for s in client.get("/api/dashboard/summary").json()["recent"]}
     assert recent[single["id"]]["study_id"] is None and recent[first_slice]["study_id"] == study["id"]
+    assert recent[first_slice]["slice_count"] == 2
     cases = client.get(f"/api/scans/{single['id']}/similar").json()["cases"]
-    assert cases and all(c["study_id"] == study["id"] for c in cases)       # only the study's slices are confirmed
+    assert cases and all(c["study_id"] == study["id"] and c["slice_count"] == 2 for c in cases)  # only the study's slices are confirmed
 
     # and so do the Word reports
     assert "Single slice" in report_text(f"/api/scans/{single['id']}/report")
-    assert f"Slice 1 of multi-slice study {study['id']}" in report_text(f"/api/scans/{first_slice}/report")
+    assert f"Slice 1 of 2 · multi-slice study {study['id']}" in report_text(f"/api/scans/{first_slice}/report")
     assert "Multi-slice study · 2 slices" in report_text(f"/api/studies/{study['id']}/report")
 
 

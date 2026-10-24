@@ -10,7 +10,7 @@ from utils.database import get_patients_collection, get_scans_collection, now_ut
 from utils import blob_storage, similarity
 from utils.model_service import MODEL_INFO, MODEL_DISPLAY_NAME, embedding_key
 from utils.security import get_current_user
-from utils.views import LIST_PROJECTION, fmt_date, scan_view
+from utils.views import LIST_PROJECTION, fmt_date, scan_view, study_sizes
 
 # Create Router
 router = APIRouter(prefix="/api", tags=["Dashboard"])
@@ -38,6 +38,7 @@ async def dashboard_summary(user: dict = Depends(get_current_user)):
 
     total = len(scans)
     distribution = {c: round(100 * sum(1 for s in scans if s["prediction"] == c) / total) if total else 0 for c in CLASS_NAMES}
+    recent_sizes = study_sizes(scans[:5])
     return {
         "patients": patients_col.count_documents({}),
         "patients_this_month": patients_col.count_documents({"created_at": {"$gte": month_start}}),
@@ -48,13 +49,15 @@ async def dashboard_summary(user: dict = Depends(get_current_user)):
         "weekly": weekly,
         "distribution": distribution,
         "low_confidence": sum(1 for s in scans if s["confidence"] < 0.7),
-        "recent": [scan_view(s, with_images=False) for s in scans[:5]],
+        "recent": [scan_view(s, with_images=False, sizes=recent_sizes) for s in scans[:5]],
     }
 
 
 @router.get("/reports")
 async def list_reports(user: dict = Depends(get_current_user)):
     """One report per scan — generated on demand by GET /api/scans/{id}/report."""
+    scans = list(get_scans_collection().find({}, NO_IMAGES).sort("created_at", -1))
+    sizes = study_sizes(scans)
     return [{
         "id": "R-" + s["id"].split("-")[-1],
         "patient_id": s["patient_id"],
@@ -62,10 +65,11 @@ async def list_reports(user: dict = Depends(get_current_user)):
         "result": s["prediction"],
         "study_id": s.get("study_id"),
         "slice_index": s.get("slice_index"),
+        "slice_count": sizes.get(s.get("study_id")),
         "created": fmt_date(s["created_at"], with_time=True),
         "blob_path": f"/api/scans/{s['id']}/report",
         "size": "DOCX",
-    } for s in get_scans_collection().find({}, NO_IMAGES).sort("created_at", -1)]
+    } for s in scans]
 
 
 def load_comparison() -> list[dict]:

@@ -29,7 +29,7 @@
             <td><b>{{ r.id }}</b></td>
             <td><a [routerLink]="['/patients', r.patient_id]">{{ r.patient_id }}</a></td>
             <td><a [routerLink]="['/scans', r.scan_id]">{{ r.scan_id }}</a></td>
-            <td><app-type-chip [studyId]="r.study_id" [slice]="r.slice_index" /></td>
+            <td><app-type-chip [studyId]="r.study_id" [slice]="r.slice_index" [total]="r.slice_count" /></td>
             <td><app-class-chip [value]="r.result" /></td>
             <td class="muted">{{ r.created }}</td>
             <td class="mono">{{ r.blob_path }}</td>

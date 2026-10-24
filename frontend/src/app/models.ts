@@ -99,6 +99,7 @@ export interface Scan {
   similar_agreement?: string | null;           // e.g. "5 / 5" (null until confirmed cases exist)
   study_id?: string | null;                    // set when the scan is one slice of a multi-slice study
   slice_index?: number | null;
+  slice_count?: number | null;                  // slices in that study
   lesion?: Lesion;                             // demo data only
 }
 
@@ -114,6 +115,7 @@ export interface SimilarCase {
   gradcam_url?: string;
   study_id?: string | null;   // set when the case is one slice of a multi-slice study
   slice_index?: number | null;
+  slice_count?: number | null;                  // slices in that study
   lesion?: Lesion;
 }
 
@@ -145,6 +147,7 @@ export interface Report {
   result: TumorClass;
   study_id?: string | null;
   slice_index?: number | null;
+  slice_count?: number | null;                  // slices in that study
   created: string;
   blob_path: string;
   size: string;

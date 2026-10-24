@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from utils.database import get_patients_collection, get_scans_collection, next_id, now_utc
 from utils.logger import logger
 from utils.security import get_current_user
-from utils.views import DETAIL_PROJECTION, LIST_PROJECTION, patient_view, scan_view
+from utils.views import DETAIL_PROJECTION, LIST_PROJECTION, patient_view, scan_view, study_sizes
 
 # Create Router
 router = APIRouter(prefix="/api/patients", tags=["Patients"])
@@ -55,6 +55,7 @@ async def get_patient(patient_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Patient not found")
     history = list(get_scans_collection().find({"patient_id": patient_id}, DETAIL_PROJECTION).sort("created_at", -1))
     view = patient_view(p, len(history), history[0] if history else None)
-    view["history"] = [scan_view(s, with_images=True) for s in history]
+    sizes = study_sizes(history)
+    view["history"] = [scan_view(s, with_images=True, sizes=sizes) for s in history]
     view["files"] = []   # files move to Azure Blob Storage in a later step
     return view

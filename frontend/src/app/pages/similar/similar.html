@@ -9,7 +9,7 @@
         @for (s of recent(); track s.id) {
           <tr class="clickable" [routerLink]="['/scans', s.id, 'similar']">
             <td><b>{{ s.id }}</b></td><td>{{ s.patient_id }}</td><td class="muted">{{ s.date }}</td>
-            <td><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" /></td><td><app-class-chip [value]="s.prediction" /></td><td>{{ s.confidence | percent: '1.1-1' }}</td>
+            <td><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" /></td><td><app-class-chip [value]="s.prediction" /></td><td>{{ s.confidence | percent: '1.1-1' }}</td>
             <td><a [routerLink]="['/scans', s.id, 'similar']">Find similar →</a></td>
           </tr>
         } @empty {
@@ -26,7 +26,7 @@
     <div class="card">
       <h3>Query scan</h3>
       <app-mri-image [src]="r.query.gradcam_url" [lesion]="r.query.lesion" [heatmap]="true" [size]="258" alt="Query scan" />
-      <div class="row wrap" style="margin-top: 12px"><app-class-chip [value]="r.query.prediction" /><b>{{ r.query.confidence | percent: '1.1-1' }}</b><app-type-chip [studyId]="r.query.study_id" [slice]="r.query.slice_index" /></div>
+      <div class="row wrap" style="margin-top: 12px"><app-class-chip [value]="r.query.prediction" /><b>{{ r.query.confidence | percent: '1.1-1' }}</b><app-type-chip [studyId]="r.query.study_id" [slice]="r.query.slice_index" [total]="r.query.slice_count" /></div>
       <div class="kv small mt">
         <div>Patient</div><div>{{ r.query.patient_id }}</div>
         <div>Search space</div><div>{{ r.search_space }}</div>
@@ -52,7 +52,7 @@
             <b class="small" style="display: block; margin-top: 8px">#{{ i + 1 }} {{ c.case_id }}</b>
             <div class="sim">{{ c.similarity }}%</div><div class="tag">similarity</div>
             <div style="margin: 8px 0"><app-class-chip [value]="c.label" /> @if (c.patient_id) { <span class="tag">· {{ c.patient_id }}</span> }</div>
-            <div style="margin: -2px 0 8px"><app-type-chip [studyId]="c.study_id" [slice]="c.slice_index" /></div>
+            <div style="margin: -2px 0 8px"><app-type-chip [studyId]="c.study_id" [slice]="c.slice_index" [total]="c.slice_count" /></div>
             <a class="btn btn-light btn-block" style="padding: 7px" [routerLink]="['/scans', r.query.id, 'compare', c.case_id]">Compare →</a>
           </div>
         }

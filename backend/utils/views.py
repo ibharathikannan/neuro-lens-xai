@@ -1,6 +1,7 @@
 """Converts MongoDB documents into the JSON shapes the Angular dashboard expects (see frontend/src/app/models.ts)."""
 from utils.blob_storage import image_url
 from utils.config import CLASS_LABELS
+from utils.database import get_studies_collection
 
 # Fields never sent in list views (large, or only used for similar-case search)
 LIST_PROJECTION = {"image_jpeg": 0, "gradcam_jpeg": 0, "embedding": 0, "heatmap": 0}
@@ -40,7 +41,18 @@ def explanation_for(prediction: str, confidence: float, has_heatmap: bool, agree
     return " ".join(parts)
 
 
-def scan_view(s: dict, with_images: bool = True) -> dict:
+def study_sizes(docs: list[dict]) -> dict[str, int]:
+    """Number of slices in each multi-slice study the given scans belong to, read in one query."""
+    ids = list({d["study_id"] for d in docs if d.get("study_id")})
+    if not ids:
+        return {}
+    return {st["id"]: st.get("slice_count", 0) for st in get_studies_collection().find({"id": {"$in": ids}}, {"id": 1, "slice_count": 1})}
+
+
+def scan_view(s: dict, with_images: bool = True, sizes: dict[str, int] | None = None) -> dict:
+    """`sizes` (from study_sizes) saves one query per scan when building a list."""
+    if sizes is None:
+        sizes = study_sizes([s])
     return {
         "id": s["id"],
         "patient_id": s["patient_id"],
@@ -60,6 +72,7 @@ def scan_view(s: dict, with_images: bool = True) -> dict:
         "similar_agreement": s.get("similar_agreement"),
         "study_id": s.get("study_id"),
         "slice_index": s.get("slice_index"),
+        "slice_count": sizes.get(s.get("study_id")),
     }
 
 
@@ -80,12 +93,14 @@ def study_view(study: dict, slices: list[dict]) -> dict:
         "explanation": study.get("explanation", ""),
         "model_version": study.get("model_version", ""),
         "report_path": f"/api/studies/{study['id']}/report",
-        "slices": [scan_view(s) for s in slices],
+        "slices": [scan_view(s, sizes={study["id"]: study.get("slice_count", len(slices))}) for s in slices],
     }
 
 
-def case_view(doc: dict, source: str, similarity: float, label: str) -> dict:
+def case_view(doc: dict, source: str, similarity: float, label: str, sizes: dict[str, int] | None = None) -> dict:
     """A reference case or reviewed patient scan in the similar-case list."""
+    if sizes is None:
+        sizes = study_sizes([doc])
     return {
         "case_id": doc["id"],
         "label": label,
@@ -96,6 +111,7 @@ def case_view(doc: dict, source: str, similarity: float, label: str) -> dict:
         "gradcam_url": image_url(doc, "gradcam"),
         "study_id": doc.get("study_id"),          # set when the case is one slice of a multi-slice study
         "slice_index": doc.get("slice_index"),
+        "slice_count": sizes.get(doc.get("study_id")),
     }
 
 

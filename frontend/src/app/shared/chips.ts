@@ -13,8 +13,8 @@ export class ClassChip {
   protected readonly known = computed(() => this.value() in CLASS_LABELS);
 }
 
-/** Tells single-slice scans apart from multi-slice studies: "Single slice", "Multi-slice · slice 2" (one slice of a
- *  study) or, with `count`, "Multi-slice · 5 slices" (the study itself). */
+/** Tells single-slice scans apart from multi-slice studies: "Single slice", "Slice 2 of 5 · ST-2026-0001" (one slice
+ *  of a study; `total` is the study size) or, with `count`, "Multi-slice · 5 slices" (the study itself). */
 @Component({
   selector: 'app-type-chip',
   template: `<span [class]="'chip ' + (multi() ? 'c-multi' : 'c-single')" [title]="title()">{{ label() }}</span>`,
@@ -22,14 +22,16 @@ export class ClassChip {
 export class TypeChip {
   readonly studyId = input<string | null | undefined>(null);
   readonly slice = input<number | null | undefined>(null);
+  readonly total = input<number | null | undefined>(null);
   readonly count = input<number | null | undefined>(null);
   protected readonly multi = computed(() => !!this.studyId() || !!this.count());
+  private readonly position = computed(() => `Slice ${this.slice() ?? '?'}` + (this.total() ? ` of ${this.total()}` : ''));
   protected readonly label = computed(() =>
     this.count() ? `Multi-slice · ${this.count()} slices`
-      : this.studyId() ? `Multi-slice · slice ${this.slice() ?? '?'}` : 'Single slice');
+      : this.studyId() ? `${this.position()} · ${this.studyId()}` : 'Single slice');
   protected readonly title = computed(() =>
     this.count() ? `Multi-slice study of ${this.count()} slices from one scan`
-      : this.studyId() ? `Slice ${this.slice() ?? '?'} of multi-slice study ${this.studyId()}` : 'Single-slice scan');
+      : this.studyId() ? `${this.position()} of multi-slice study ${this.studyId()}` : 'Single-slice scan');
 }
 
 /** Chip for a review status. */

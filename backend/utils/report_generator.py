@@ -57,14 +57,14 @@ def _picture(doc, buffer, caption, width=3.2):
 
 
 def generate_docx_report(image_buffer, prediction, probabilities, patient_id, scan_id,
-                         model_version, gradcam_buffer=None, similar_cases=None, study_id=None, slice_index=None):
+                         model_version, gradcam_buffer=None, similar_cases=None, study_id=None, slice_index=None, slice_count=None):
     """
     Generates a template-based brain tumor MRI classification report (DOCX).
 
     prediction:     class key, e.g. "glioma"
     probabilities:  {"glioma": 0.93, "meningioma": 0.04, "notumor": 0.01, "pituitary": 0.02}
     similar_cases:  optional list of {"case_id", "label", "similarity"} (similarity 0-100)
-    study_id:       set when the scan is one slice of a multi-slice study (slice_index is its position)
+    study_id:       set when the scan is one slice of a multi-slice study (slice_index is its position, slice_count the study size)
     """
     logger.info(f"Generating report for scan {scan_id}: {prediction}")
     doc = Document()
@@ -91,7 +91,8 @@ def generate_docx_report(image_buffer, prediction, probabilities, patient_id, sc
     summary = _table(doc, [
         ("Patient", patient_id),
         ("Scan", scan_id),
-        ("Scan type", f"Slice {slice_index} of multi-slice study {study_id}" if study_id else "Single slice"),
+        ("Scan type", (f"Slice {slice_index}" + (f" of {slice_count}" if slice_count else "") + f" · multi-slice study {study_id}")
+                      if study_id else "Single slice"),
         ("Predicted class", CLASS_LABELS.get(prediction, prediction)),
         ("Confidence", f"{confidence * 100:.1f}%"),
         ("Model", model_version),
