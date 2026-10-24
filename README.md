@@ -36,7 +36,7 @@ The application runs as one Docker container on Azure; every push to `main` is t
 
 ## SECTION 4 : VIDEO OF SYSTEM MODELLING & USE CASE DEMO
 
-<a href="https://youtu.be/DgXNyZJQaDQ" title="NeuroLens video presentation"><img src="docs/images/architecture.png" alt="NeuroLens system architecture" width="720" /></a>
+<a href="https://youtu.be/24CRg9Hdhk8" title="NeuroLens video presentation"><img src="docs/images/architecture.png" alt="NeuroLens system architecture" width="720" /></a>
 
 A 12-minute presentation in two parts. **Part A** demonstrates the live application through three clinical use cases: classifying several slices of one scan, classifying and explaining a single slice (including the model's one mistake on the test images, which is flagged as low confidence), and checking a prediction against similar confirmed cases. **Part B** explains how it works, following the architecture above: the data and preprocessing, the model comparison and selection, the ablation study, the choice of heatmap method, the evaluation of similar-case search, multi-slice studies, the engineering and deployment, and the limitations.
 
