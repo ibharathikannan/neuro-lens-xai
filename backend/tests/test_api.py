@@ -278,7 +278,10 @@ def test_scan_type_tells_single_slices_from_multi_slice_studies(client):
     assert client.get(f"/api/scans/{first_slice}").json()["slice_count"] == 2
     recent = {s["id"]: s for s in client.get("/api/dashboard/summary").json()["recent"]}
     assert recent[single["id"]]["study_id"] is None and recent[first_slice]["study_id"] == study["id"]
-    assert recent[first_slice]["slice_count"] == 2
+    assert recent[first_slice]["slice_count"] == 2 and recent[first_slice]["is_study"]     # the study, listed once
+    assert study["slices"][1]["id"] not in recent and recent[first_slice]["prediction"] == study["prediction"]
+    history = client.get(f"/api/patients/{single['patient_id']}").json()["history"]
+    assert sum(1 for h in history if h["study_id"] == study["id"]) == 1
     cases = client.get(f"/api/scans/{single['id']}/similar").json()["cases"]
     assert cases and all(c["study_id"] == study["id"] and c["slice_count"] == 2 for c in cases)  # only the study's slices are confirmed
 

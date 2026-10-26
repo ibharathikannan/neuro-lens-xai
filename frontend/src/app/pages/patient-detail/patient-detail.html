@@ -41,15 +41,14 @@
               <div class="row" style="align-items: flex-start; gap: 16px">
                 <app-mri-image [src]="s.gradcam_url" [lesion]="s.lesion" [heatmap]="true" [size]="92" [alt]="'Scan ' + s.id" />
                 <div style="flex: 1">
-                  <div class="row between"><b>{{ s.id }}</b><span class="muted small">{{ s.date }}</span></div>
+                  <div class="row between"><b>{{ s.is_study ? s.study_id : s.id }}</b><span class="muted small">{{ s.date }}</span></div>
                   <div class="row wrap" style="margin: 8px 0">
                     <app-class-chip [value]="s.prediction" />
                     <span class="small">Confidence <b>{{ s.confidence | percent: '1.1-1' }}</b></span>
                     <app-status-chip [value]="s.status" />
-                    <app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" />
+                    <app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" [count]="s.is_study ? s.slice_count : null" />
                   </div>
                   <div class="row small">
-                    @if (s.study_id) { <a [routerLink]="['/scans', s.id]">Study {{ s.study_id }} · slice {{ s.slice_index }}</a> }
                     <a [routerLink]="['/scans', s.id]">View result</a>
                     <a [routerLink]="['/scans', s.id, 'similar']">Similar cases</a>
                   </div>

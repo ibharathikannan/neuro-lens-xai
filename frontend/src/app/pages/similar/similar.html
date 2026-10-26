@@ -8,8 +8,8 @@
       <tbody>
         @for (s of recent(); track s.id) {
           <tr class="clickable" [routerLink]="['/scans', s.id, 'similar']">
-            <td><b>{{ s.id }}</b></td><td>{{ s.patient_id }}</td><td class="muted">{{ s.date }}</td>
-            <td><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" /></td><td><app-class-chip [value]="s.prediction" /></td><td>{{ s.confidence | percent: '1.1-1' }}</td>
+            <td><b>{{ s.is_study ? s.study_id : s.id }}</b></td><td>{{ s.patient_id }}</td><td class="muted">{{ s.date }}</td>
+            <td><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" [count]="s.is_study ? s.slice_count : null" /></td><td><app-class-chip [value]="s.prediction" /></td><td>{{ s.confidence | percent: '1.1-1' }}</td>
             <td><a [routerLink]="['/scans', s.id, 'similar']">Find similar →</a></td>
           </tr>
         } @empty {

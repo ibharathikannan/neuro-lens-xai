@@ -100,6 +100,8 @@ export interface Scan {
   study_id?: string | null;                    // set when the scan is one slice of a multi-slice study
   slice_index?: number | null;
   slice_count?: number | null;                  // slices in that study
+  is_study?: boolean;                           // list row standing for a whole multi-slice study
+  slice_agreement?: string | null;              // on study rows, e.g. "4 / 4" slices agree
   lesion?: Lesion;                             // demo data only
 }
 

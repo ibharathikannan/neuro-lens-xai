@@ -76,6 +76,39 @@ def scan_view(s: dict, with_images: bool = True, sizes: dict[str, int] | None = 
     }
 
 
+def one_per_study(scans: list[dict], with_images: bool = False, limit: int | None = None) -> list[dict]:
+    """A list of scans (newest first) in which a multi-slice study appears once: its combined result, linked to its
+    first slice (whose result page shows the whole study). Single-slice scans are listed as they are."""
+    ids = list({s["study_id"] for s in scans if s.get("study_id")})
+    studies = {st["id"]: st for st in get_studies_collection().find({"id": {"$in": ids}})} if ids else {}
+    first = {}
+    for s in scans:
+        sid = s.get("study_id")
+        if sid and (sid not in first or s.get("slice_index", 0) < first[sid].get("slice_index", 0)):
+            first[sid] = s
+    sizes = {sid: st.get("slice_count", 0) for sid, st in studies.items()}
+    rows, seen = [], set()
+    for s in scans:
+        sid = s.get("study_id")
+        if sid in seen:
+            continue
+        if sid:
+            seen.add(sid)
+            row = scan_view(first[sid], with_images, sizes)
+            st = studies.get(sid)
+            if st:
+                row.update(prediction=st["prediction"], confidence=st["confidence"], probabilities=st["probabilities"],
+                           status=st.get("status", row["status"]), explanation=st.get("explanation", ""),
+                           slice_agreement=st.get("slice_agreement"), similar_agreement=None)
+            row.update(slice_index=None, is_study=True)
+        else:
+            row = {**scan_view(s, with_images, sizes), "is_study": False}
+        rows.append(row)
+        if limit and len(rows) >= limit:
+            break
+    return rows
+
+
 def study_view(study: dict, slices: list[dict]) -> dict:
     """A multi-slice study with its combined result and every slice (each slice is a normal scan)."""
     return {

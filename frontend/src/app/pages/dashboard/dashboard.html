@@ -65,13 +65,13 @@
       <tbody>
         @for (s of d.recent; track s.id) {
           <tr class="clickable" [routerLink]="['/scans', s.id]">
-            <td><b>{{ s.id }}</b></td>
+            <td><b>{{ s.is_study ? s.study_id : s.id }}</b></td>
             <td>{{ s.patient_id }}</td>
             <td class="muted">{{ s.date }}</td>
-            <td><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" /></td>
+            <td><app-type-chip [studyId]="s.study_id" [slice]="s.slice_index" [total]="s.slice_count" [count]="s.is_study ? s.slice_count : null" /></td>
             <td><app-class-chip [value]="s.prediction" /></td>
             <td>{{ s.confidence | percent: '1.1-1' }} @if (s.confidence < 0.7) { <span class="chip c-warn">review</span> }</td>
-            <td>{{ s.similar_agreement }}</td>
+            <td>{{ s.is_study ? s.slice_agreement + ' slices agree' : s.similar_agreement }}</td>
             <td><a [routerLink]="['/scans', s.id]">Open <app-icon name="arrowRight" [size]="14" /></a></td>
           </tr>
         }

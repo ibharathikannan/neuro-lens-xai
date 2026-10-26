@@ -10,7 +10,7 @@ from utils.database import get_patients_collection, get_scans_collection, get_st
 from utils import blob_storage, similarity
 from utils.model_service import MODEL_INFO, MODEL_DISPLAY_NAME, embedding_key
 from utils.security import get_current_user
-from utils.views import LIST_PROJECTION, fmt_date, scan_view, study_sizes
+from utils.views import LIST_PROJECTION, fmt_date, one_per_study
 
 # Create Router
 router = APIRouter(prefix="/api", tags=["Dashboard"])
@@ -38,7 +38,6 @@ async def dashboard_summary(user: dict = Depends(get_current_user)):
 
     total = len(scans)
     distribution = {c: round(100 * sum(1 for s in scans if s["prediction"] == c) / total) if total else 0 for c in CLASS_NAMES}
-    recent_sizes = study_sizes(scans[:5])
     return {
         "patients": patients_col.count_documents({}),
         "patients_this_month": patients_col.count_documents({"created_at": {"$gte": month_start}}),
@@ -49,7 +48,7 @@ async def dashboard_summary(user: dict = Depends(get_current_user)):
         "weekly": weekly,
         "distribution": distribution,
         "low_confidence": sum(1 for s in scans if s["confidence"] < 0.7),
-        "recent": [scan_view(s, with_images=False, sizes=recent_sizes) for s in scans[:5]],
+        "recent": one_per_study(scans, limit=5),          # a multi-slice study is one row
     }
 
 
