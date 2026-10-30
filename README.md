@@ -140,7 +140,16 @@ Reading brain MRI takes time and specialist expertise, and readers do not always
 
 ### 6.3 Data and preprocessing
 
-- **Dataset:** Kaggle Brain Tumor MRI Dataset v1 (Nickparvar) — 7,023 slices in 4 classes, built from the Figshare, SARTAJ and Br35H collections. The published Testing folder (1,311 images) is the test set.
+NeuroLens uses public data only. The full datasets are not stored in this repository because of their size; the notebook downloads them ([`research/BRAIN_TUMOR_CLASSIFICATION.ipynb`](research/BRAIN_TUMOR_CLASSIFICATION.ipynb), Section 2), and each is used under the terms on its own page, with attribution.
+
+| Dataset | Source and licence | Role in NeuroLens |
+| --- | --- | --- |
+| Brain Tumor MRI Dataset v1 (Nickparvar) | [kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset) — Kaggle terms | Training and evaluation: 7,023 2D slices in 4 classes (glioma, meningioma, no tumour, pituitary). The published Testing folder (1,311 images) is the test set. |
+| Figshare (Cheng et al. 2015) | [doi.org/10.6084/m9.figshare.1512427](https://doi.org/10.6084/m9.figshare.1512427) — CC BY 4.0 | Merged into the Kaggle dataset. Its records carry a patient ID, so slices of one patient form a multi-slice study. |
+| SARTAJ (Bhuvaji et al. 2020) | [kaggle.com/datasets/sartajbhuvaji/brain-tumor-classification-mri](https://www.kaggle.com/datasets/sartajbhuvaji/brain-tumor-classification-mri) — Kaggle terms | Merged into the Kaggle dataset. Its glioma images were mislabelled and were replaced with Figshare images. |
+| Br35H (Hamada 2020) | [kaggle.com/datasets/ahmedhamada0/brain-tumor-detection](https://www.kaggle.com/datasets/ahmedhamada0/brain-tumor-detection) — Kaggle terms | Merged into the Kaggle dataset; the source of the no-tumour class. |
+
+- **Bundled test data ([`test_data/`](test_data)):** 40 single slices, 10 per class, from the published Testing folder (never used for training), and 15 multi-slice patients (glioma, meningioma, pituitary; 4–5 slices each, 71 slices) from the Figshare collection. The Figshare patients are part of the merged Kaggle data, so the multi-slice set demonstrates the feature rather than measuring accuracy.
 - **Cleaning:** MD5 hashing found **134 training images that were also in the test set** and 191 duplicates inside Training; both were removed (5,712 → 5,442 training images).
 - **Split:** 4,625 training · 817 validation · 1,311 test images, stratified by class.
 - **Imbalance:** minority classes oversampled to 1,224 images each on the training split only, with random augmentation (rotation, shift, zoom, flip, brightness). Images are converted to RGB, resized to 224 × 224 and scaled to [0, 1] — the same steps the backend uses.
@@ -220,9 +229,9 @@ The individual reflection (personal contribution, most useful learning and how i
 
 - Nickparvar, M. *Brain Tumor MRI Dataset.* Kaggle. https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset
 - Cheng, J. et al. (2015). Enhanced performance of brain tumor classification via tumor region augmentation and partition. *PLoS ONE* 10(10): e0140381. Dataset: https://doi.org/10.6084/m9.figshare.1512427
-- Bhuvaji, S. et al. (2020). *Brain Tumor Classification (MRI).* Kaggle.
-- Hamada, A. (2020). *Br35H :: Brain Tumor Detection 2020.* Kaggle.
-- Roy, S. et al. (2025). Fibonacci-Net: A Lightweight CNN Model for Automatic Brain Tumor Classification. arXiv:2503.13928.
+- Bhuvaji, S. et al. (2020). *Brain Tumor Classification (MRI).* Kaggle. https://www.kaggle.com/datasets/sartajbhuvaji/brain-tumor-classification-mri
+- Hamada, A. (2020). *Br35H :: Brain Tumor Detection 2020.* Kaggle. https://www.kaggle.com/datasets/ahmedhamada0/brain-tumor-detection
+- Roy, S. et al. (2025). Fibonacci-Net: A Lightweight CNN Model for Automatic Brain Tumor Classification. arXiv:2503.13928. https://arxiv.org/abs/2503.13928
 - Sandler, M. et al. (2018). MobileNetV2. CVPR · Tan, M. and Le, Q. V. (2019). EfficientNet. ICML · Chollet, F. (2017). Xception. CVPR.
 - Selvaraju, R. R. et al. (2017). Grad-CAM. ICCV · Chattopadhay, A. et al. (2018). Grad-CAM++. WACV · Wang, H. et al. (2020). Score-CAM. CVPRW · Jiang, P.-T. et al. (2021). LayerCAM. IEEE TIP · Muhammad, M. B. and Yeasin, M. (2020). Eigen-CAM. IJCNN.
 - Adebayo, J. et al. (2018). Sanity Checks for Saliency Maps. NeurIPS · Petsiuk, V. et al. (2018). RISE. BMVC.
